@@ -1,1 +1,1 @@
-# idris2-oracle-simple
+# idris2-oracle
