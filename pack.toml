@@ -1,0 +1,10 @@
+[custom.all.idris2-oracle]
+type = "local"
+path = "."
+ipkg = "idris2-oracle.ipkg"
+test = "test/test.ipkg"
+
+[custom.all.idris2-oracle-test]
+type = "local"
+path = "test"
+ipkg = "test.ipkg"
