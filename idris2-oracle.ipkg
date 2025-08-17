@@ -1,7 +1,7 @@
 package idris2-oracle
 version = 0.1.0
 authors = "Matthew Mosior"
-license = "MIT"
+license = "BSD-3 Clause"
 brief   = "Oracle support for Idris2 programs compiled with the Chez scheme backend."
 homepage = "https://github.com/Matthew-Mosior/idris2-oracle"
 sourceloc = "https://github.com/Matthew-Mosior/idris2-oracle/tree/main/src"
@@ -11,17 +11,14 @@ langversion >= 0.7.0
 
 sourcedir = "src"
 
-modules = Idris2_oracle
+modules = Oracle.DB.Pool.Internal
+        , Oracle.DB.Pool.Types
+        , Oracle.FFI.Utility
 
 depends = base
+        , cptr
         , array
-        , bytestring
-        , hashable
-        , linux
-        , parser-json
         , posix
-        , random-pure
-        , ref1
 
 prebuild = "make -C support"
 preinstall = "make -C support install"

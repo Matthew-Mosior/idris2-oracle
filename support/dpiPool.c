@@ -458,6 +458,22 @@ int dpiPool_close(dpiPool *pool, dpiPoolCloseMode mode)
 
 
 //-----------------------------------------------------------------------------
+// dpiPool_close_d() [PUBLIC]
+//   Destroy the pool now, not when the reference count reaches zero.
+//-----------------------------------------------------------------------------
+int dpiPool_close_d(dpiPool *pool, dpiPoolCloseMode *mode)
+{
+    dpiError error;
+
+    if (dpiPool__checkConnected(pool, __func__, &error) < 0)
+        return dpiGen__endPublicFn(pool, DPI_FAILURE, &error);
+    if (dpiOci__sessionPoolDestroy(pool, *mode, 1, &error) < 0)
+        return dpiGen__endPublicFn(pool, DPI_FAILURE, &error);
+    return dpiGen__endPublicFn(pool, DPI_SUCCESS, &error);
+}
+
+
+//-----------------------------------------------------------------------------
 // dpiPool_create() [PUBLIC]
 //   Create a new session pool and return it.
 //-----------------------------------------------------------------------------
@@ -708,6 +724,17 @@ int dpiPool_reconfigure(dpiPool *pool, uint32_t minSessions,
 int dpiPool_setGetMode(dpiPool *pool, dpiPoolGetMode value)
 {
     return dpiPool__setAttributeUint(pool, DPI_OCI_ATTR_SPOOL_GETMODE, value,
+            __func__);
+}
+
+
+//-----------------------------------------------------------------------------
+// dpiPool_setGetMode_d() [PUBLIC]
+//   Set the pool's "get" mode.
+//-----------------------------------------------------------------------------
+int dpiPool_setGetMode_d(dpiPool *pool, dpiPoolGetMode *value)
+{
+    return dpiPool__setAttributeUint(pool, DPI_OCI_ATTR_SPOOL_GETMODE, *value,
             __func__);
 }
 
