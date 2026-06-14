@@ -1,0 +1,16 @@
+package oracle
+
+authors    = "Matthew Mosior"
+brief      = "Oracle support for Idris2 programs compiled with the Chez scheme backend."
+license    = "BSD-3 Clause"
+version    = 0.1.0
+sourcedir  = "src"
+depends    = base
+           , cptr
+           , array
+           , posix
+modules    = Oracle.DB.Pool.Internal
+           , Oracle.DB.Pool.Types
+           , Oracle.FFI.Utility
+prebuild   = "make -C support"
+preinstall = "make -C support install"

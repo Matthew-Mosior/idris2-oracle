@@ -1,4 +1,4 @@
-TARGET = liboracle-idris
+TARGET = oracle-idris
 TARGET_VERSION ?= 0.0.1
 
 INSTALLDIR = ../lib
