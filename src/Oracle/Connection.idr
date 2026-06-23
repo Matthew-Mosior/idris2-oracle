@@ -11,11 +11,7 @@ import Oracle.Types.Error
 export
 connect : ConnectInfo -> IO (Either OracleError Connection)
 connect cfg = do
-  ptr <- primIO $
-    prim__connect
-      cfg.username
-      cfg.password
-      (connectString cfg)
+  ptr <- primIO (prim__connect cfg.username cfg.password (connectString cfg))
   case prim__nullAnyPtr ptr == 1 of
     True  => do
       lasterr <- getLastError
@@ -36,5 +32,4 @@ connect cfg = do
 export
 disconnect : Connection -> IO ()
 disconnect conn =
-  primIO $
-    prim__disconnect conn.ptr
+  primIO (prim__disconnect conn.ptr)
