@@ -6,11 +6,39 @@ license    = "BSD-3 Clause"
 version    = 0.1.0
 sourcedir  = "src"
 depends    = base
-           , cptr
            , array
+           , bytestring
+           , cptr
+           , elin
            , posix
-modules    = Oracle.DB.Pool.Internal
-           , Oracle.DB.Pool.Types
-           , Oracle.FFI.Utility
+modules    = Oracle
+           , Oracle.Error
+           , Oracle.Query
+           , Oracle.Statement
+           , Oracle.Transaction
+           , Oracle.FFI.Bind
+           , Oracle.FFI.Connection
+           , Oracle.FFI.Context
+           , Oracle.FFI.Data
+           , Oracle.FFI.Error
+           , Oracle.FFI.Lob
+           , Oracle.FFI.QueryInfo
+           , Oracle.FFI.Statement
+           , Oracle.FFI.Transaction
+           , Oracle.Internal.Decode
+           , Oracle.Internal.Either
+           , Oracle.Internal.Lob
+           , Oracle.Internal.QueryInfo
+           , Oracle.Internal.Pointer
+           , Oracle.Types.BindParameter
+           , Oracle.Types.ColumnInfo
+           , Oracle.Types.ConnectInfo
+           , Oracle.Types.DateTime
+           , Oracle.Types.Error
+           , Oracle.Types.Instances
+           , Oracle.Types.OracleType
+           , Oracle.Types.PoolConfig
+           , Oracle.Types.Row
+           , Oracle.Types.Value
 prebuild   = "make -C support"
 preinstall = "make -C support install"
