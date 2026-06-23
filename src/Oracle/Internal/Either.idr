@@ -38,3 +38,29 @@ andThen action f = do
       pure (Left err)
     Right value =>
       f value
+
+export infixl 1 >>==
+||| Infix version of `andThen`.
+|||
+||| Allows sequencing Oracle operations using
+||| monadic-style syntax.
+|||
+||| Example:
+|||
+||| ```idris
+||| bind stmt params >>== \_ =>
+||| execute stmt     >>== \_ =>
+||| fetchRaw stmt
+||| ```
+|||
+||| Equivalent to:
+|||
+||| ```idris
+||| andThen (bind stmt params) (\_ =>
+|||   andThen (execute stmt) (\_ =>
+|||     fetchRaw stmt))
+||| ```
+|||
+export
+(>>==) : IO (Either e a) -> (a -> IO (Either e b)) -> IO (Either e b)
+(>>==) = andThen

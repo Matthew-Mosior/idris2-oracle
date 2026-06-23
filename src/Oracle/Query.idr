@@ -1,6 +1,7 @@
 module Oracle.Query
 
 import Oracle.Statement
+import Oracle.Internal.Either
 import Oracle.Internal.Pointer
 import Oracle.Types.BindParameter
 import Oracle.Types.Error
@@ -48,22 +49,29 @@ decodeRows rows =
           go rest (value :: acc)
 
 --------------------------------------------------------------------------------
---          Query Raw
+--          Untyped Query
 --------------------------------------------------------------------------------
 
-||| Execute a query and return rows as raw Oracle values.
+||| Execute a SQL query while automatically managing the prepared statement lifetime.
 |||
-||| Each row is represented as:
+||| This is the raw query API.
 |||
-||| ```idris
-||| List OracleValue
-||| ```
+||| The statement is:
+||| 1. Prepared.
+||| 2. Bound with parameters.
+||| 3. Executed.
+||| 4. Fetched.
+||| 5. Released.
 |||
-||| This function provides untyped decoding, use `query_` for typed decoding.
+||| Returned rows contain raw Oracle values.
 |||
 export covering
 queryRaw : Connection -> String -> List BindParameter -> IO (Either OracleError (List (List OracleValue)))
-queryRaw conn sql params = query conn sql params
+queryRaw conn sql params =
+  withStatement conn sql $ \stmt => do
+    bind stmt params >>== \_ =>
+      execute stmt >>== \_ =>
+        fetchRaw stmt
 
 --------------------------------------------------------------------------------
 --          Typed Query
