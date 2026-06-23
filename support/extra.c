@@ -3,12 +3,6 @@
 #include <string.h>
 #include "dpi.h"
 
-/*
- * Retrieve metadata for a query column.
- *
- * The returned dpiQueryInfo must eventually be freed
- * by oracle_query_info_free().
- */
 dpiQueryInfo *oracle_query_info(dpiStmt *stmt, int32_t column)
 {
     dpiQueryInfo *info;
