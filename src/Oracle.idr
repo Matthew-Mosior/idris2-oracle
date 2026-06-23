@@ -2,6 +2,7 @@ module Oracle
 
 import public Oracle.Connection
 import public Oracle.Context
+import public Oracle.Query
 import public Oracle.Statement
 import public Oracle.Transaction
 import public Oracle.Types.ConnectInfo
