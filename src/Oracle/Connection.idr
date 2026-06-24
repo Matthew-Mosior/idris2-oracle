@@ -36,7 +36,6 @@ disconnect : Connection -> IO ()
 disconnect conn =
   primIO (prim__disconnect conn.ptr)
 
-
 ||| Establish a connection, execute an action, and
 ||| guarantee that the connection is closed afterwards.
 |||
