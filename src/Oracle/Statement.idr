@@ -21,8 +21,7 @@ import Oracle.Types.Value
 
 ||| Prepare a SQL statement.
 |||
-||| The returned statement must eventually be released with
-||| `release` or managed with `withStatement`.
+||| The returned statement must eventually be released with `release` or managed with `withStatement`.
 |||
 export
 prepare : Connection -> String -> IO (Either OracleError Statement)
@@ -48,15 +47,13 @@ release stmt =
 --          With Statement
 --------------------------------------------------------------------------------
 
-||| Prepare a statement, execute an action, and guarantee that the
-||| statement is released afterwards.
+||| Prepare a statement, execute an action, and guarantee that the statement is released afterwards.
 |||
 ||| This is the preferred way to work with prepared statements.
 |||
 ||| Prepare a statement, execute an action, and guarantee cleanup.
 |||
-||| The statement is released regardless of whether the action
-||| succeeds or fails.
+||| The statement is released regardless of whether the action succeeds or fails.
 |||
 export
 withStatement : Connection -> String -> (Statement -> IO (Either OracleError a)) -> IO (Either OracleError a)
@@ -120,6 +117,8 @@ execute stmt = do
 ||| - OracleInt
 ||| - OracleDouble
 ||| - OracleBool
+||| - OracleClob
+||| - OracleBlob
 |||
 ||| OracleBytes bindings are not supported as of yet.
 |||

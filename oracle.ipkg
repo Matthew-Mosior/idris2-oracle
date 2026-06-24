@@ -9,6 +9,7 @@ depends    = base
            , array
            , bytestring
            , cptr
+           , elab-util
            , elin
            , posix
 modules    = Oracle

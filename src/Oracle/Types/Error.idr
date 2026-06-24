@@ -1,5 +1,9 @@
 module Oracle.Types.Error
 
+import Derive.Prelude
+
+%language ElabReflection
+
 ||| Oracle database error returned from ODPI-C.
 |||
 ||| Every Oracle operation that can fail returns an
@@ -13,6 +17,8 @@ record OracleError where
   message     : String
   fnname      : String
   recoverable : Bool
+
+%runElab derive "OracleError" [Show]
 
 export
 invalidrow : OracleError

@@ -109,3 +109,132 @@ query_ conn sql params = do
       pure (Left err)
     Right values =>
       pure (decodeRows values)
+
+--------------------------------------------------------------------------------
+--          Single Row Query
+--------------------------------------------------------------------------------
+
+||| Execute a query and decode at most a single row.
+|||
+||| Returns:
+||| - Left OracleError if execution fails.
+||| - Right Nothing if no rows were returned.
+||| - Right (Just value) for the first row.
+|||
+||| If multiple rows are returned, only the first row is used and the remainder are ignored.
+|||
+||| Example:
+|||
+||| ```idris
+||| employee <-
+|||   queryOne
+|||     conn
+|||     "select id,name
+|||        from employees
+|||       where id = :id"
+|||     [ MkBindParameter "id"
+|||         (OracleInt 1)
+|||     ]
+||| ```
+|||
+export covering
+queryOne : FromRow a => Connection -> String -> List BindParameter -> IO (Either OracleError (Maybe a))
+queryOne conn sql params = do
+  result <- query_ conn sql params
+  case result of
+    Left err       =>
+      pure (Left err)
+    Right []       =>
+      pure (Right Nothing)
+    Right (x :: _) =>
+      pure (Right (Just x))
+
+||| Execute a query and require exactly one row.
+|||
+||| Returns:
+||| - Left OracleError if query execution fails.
+||| - Left OracleError if no rows are returned.
+||| - Left OracleError if more than one row is returned.
+||| - Right value if exactly one row is returned.
+|||
+||| This function is useful when querying by a primary key or other unique identifier.
+|||
+||| Example:
+|||
+||| ```idris
+||| employee <-
+|||   queryExactlyOne
+|||     conn
+|||     "select id,name
+|||        from employees
+|||       where id = :id"
+|||     [ MkBindParameter "id"
+|||         (OracleInt 1)
+|||     ]
+||| ```
+|||
+export covering
+queryExactlyOne : FromRow a => Connection -> String -> List BindParameter -> IO (Either OracleError a)
+queryExactlyOne conn sql params = do
+  result <- query_ conn sql params
+  case result of
+    Left err            =>
+      pure (Left err)
+    Right []            =>
+      pure $
+        Left $
+          MkOracleError
+            (-1)
+            "Expected exactly one row but query returned no rows"
+            "queryExactlyOne"
+            False
+    Right [value]       =>
+      pure (Right value)
+    Right (_ :: _ :: _) =>
+      pure $
+        Left $
+          MkOracleError
+            (-1)
+            "Expected exactly one row but query returned multiple rows"
+            "queryExactlyOne"
+            False
+
+--------------------------------------------------------------------------------
+--          Execute Statement That Returns No Rows
+--------------------------------------------------------------------------------
+
+||| Execute a statement that does not return rows.
+|||
+||| This function is intended for:
+||| - INSERT
+||| - UPDATE
+||| - DELETE
+||| - MERGE
+||| - DDL statements
+|||
+||| The statement is automatically:
+||| 1. Prepared.
+||| 2. Bound.
+||| 3. Executed.
+||| 4. Released.
+|||
+||| Example:
+|||
+||| ```idris
+||| execute_
+|||   conn
+|||   "insert into employees(id,name)
+|||    values (:id,:name)"
+|||   [ MkBindParameter "id"
+|||       (OracleInt 1)
+|||   , MkBindParameter "name"
+|||       (OracleString "Alice")
+|||   ]
+||| ```
+|||
+export
+execute_ : Connection -> String -> List BindParameter -> IO (Either OracleError ())
+execute_ conn sql params =
+  withStatement conn sql $ \stmt =>
+    bind stmt params >>== \_ =>
+      execute stmt
