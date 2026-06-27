@@ -36,13 +36,10 @@ disconnect : Connection -> IO ()
 disconnect conn =
   primIO (prim__disconnect conn.ptr)
 
-||| Establish a connection, execute an action, and
-||| guarantee that the connection is closed afterwards.
+||| Establish a connection, execute an action, and guarantee that the connection is closed afterwards.
 |||
-||| This function provides safe resource management
-||| for Oracle connections and should generally be
-||| preferred over calling `connect` and `disconnect`
-||| manually.
+||| This function provides safe resource management for Oracle connections,
+||| and should generally be preferred over calling `connect` and `disconnect` manually.
 |||
 ||| The connection is:
 ||| 1. Established.
