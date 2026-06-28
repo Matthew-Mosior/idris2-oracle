@@ -32,9 +32,7 @@ decodeColumn stmt column = do
     Right info => do
       tynum   <- primIO (prim__queryInfoType info)
       dataptr <- primIO (prim__columnValue stmt column)
-      -- NULL pointer here means
-      -- dpiStmt_getQueryValue()
-      -- failed.
+      -- NULL pointer here means dpiStmt_getQueryValue() failed.
       case prim__nullAnyPtr dataptr == 1 of
         True  => do
           err <- getLastError

@@ -1,19 +1,12 @@
 module Oracle.Internal.Either
 
-||| Monadic composition for Oracle operations that return
-||| `Either` values inside `IO`.
+||| Monadic composition for Oracle operations that return `Either` values inside `IO`.
 |||
-||| If the first action succeeds, its result is passed to
-||| the supplied continuation.
+||| If the first action succeeds, its result is passed to the supplied continuation.
 |||
-||| If the first action fails with `Left`, the error is
-||| propagated immediately and the continuation is not
-||| executed.
+||| If the first action fails with `Left`, the error is propagated immediately and the continuation is not executed.
 |||
-||| This function is useful for sequencing database
-||| operations while automatically propagating
-||| `OracleError` values without deeply nested
-||| pattern matching.
+||| This function is useful for sequencing database operations while automatically propagating `OracleError` values without deeply nested pattern matching.
 |||
 ||| Example:
 |||
@@ -25,9 +18,7 @@ module Oracle.Internal.Either
 |||     fetchRaw stmt
 ||| ```
 |||
-||| This behaves similarly to `(>>=)` for
-||| `Either e`, but operates on values of type
-||| `IO (Either e a)`.
+||| This behaves similarly to `(>>=)` for `Either e`, but operates on values of type `IO (Either e a)`.
 |||
 export
 andThen : IO (Either e a) -> (a -> IO (Either e b)) -> IO (Either e b)
@@ -42,8 +33,7 @@ andThen action f = do
 export infixl 1 >>==
 ||| Infix version of `andThen`.
 |||
-||| Allows sequencing Oracle operations using
-||| monadic-style syntax.
+||| Allows sequencing Oracle operations using monadic-style syntax.
 |||
 ||| Example:
 |||
