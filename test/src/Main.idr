@@ -5,7 +5,7 @@ import System
 
 main : IO ()
 main = do
-  Right result <-
+  Right _ <-
     withConnection connectinfo $ \conn =>
       installSchema conn >>== \_ =>
       resetDatabase conn >>== \_ => do
@@ -16,3 +16,4 @@ main = do
         test_InvalidService conn
     | Left err =>
         die (show err)
+  pure ()
