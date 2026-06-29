@@ -4,5 +4,5 @@ module Oracle.FFI.Context
 |||
 ||| Returns a raw dpiContext pointer.
 |||
-export %foreign "C:oracle_context_create"
+export %foreign "C:oracle_context_create,oracle-idris"
 prim__contextCreate : PrimIO AnyPtr

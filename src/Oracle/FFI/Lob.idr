@@ -13,7 +13,7 @@ module Oracle.FFI.Lob
 |||
 ||| The returned LOB handle is owned by the statement row and must not be released with `oracle_lob_release`.
 |||
-export %foreign "C:oracle_data_lob"
+export %foreign "C:oracle_data_lob,oracle-idris"
 prim__dataLob : AnyPtr -> PrimIO AnyPtr
 
 ||| Retrieve the byte size of a LOB.
@@ -22,7 +22,7 @@ prim__dataLob : AnyPtr -> PrimIO AnyPtr
 ||| - Size of the LOB.
 ||| - Negative value on failure.
 |||
-export %foreign "C:oracle_lob_size"
+export %foreign "C:oracle_lob_size,oracle-idris"
 prim__lobSize : AnyPtr -> PrimIO Int64
 
 ||| Read bytes from a BLOB.
@@ -37,22 +37,22 @@ prim__lobSize : AnyPtr -> PrimIO Int64
 |||
 ||| The returned buffer must be released with `oracle_lob_free_buffer`.
 |||
-export %foreign "C:oracle_lob_read"
+export %foreign "C:oracle_lob_read,oracle-idris"
 prim__lobRead : AnyPtr -> Int64 -> Int64 -> PrimIO String
 
 ||| Read a CLOB as UTF-8 text.
 |||
 ||| The returned string is allocated by the C layer and must be released.
 |||
-export %foreign "C:oracle_clob_read"
+export %foreign "C:oracle_clob_read,oracle-idris"
 prim__clobRead : AnyPtr -> PrimIO String
 
 ||| Release a LOB handle.
 |||
-export %foreign "C:oracle_lob_release"
+export %foreign "C:oracle_lob_release,oracle-idris"
 prim__lobRelease : AnyPtr -> PrimIO ()
 
 ||| Release memory returned by LOB reads.
 |||
-export %foreign "C:oracle_lob_free_buffer"
+export %foreign "C:oracle_lob_free_buffer,oracle-idris"
 prim__lobFreeBuffer : String -> PrimIO ()

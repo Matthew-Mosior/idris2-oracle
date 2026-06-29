@@ -11,7 +11,7 @@ module Oracle.FFI.Transaction
 ||| - 0 on success.
 ||| - Non-zero on failure.
 |||
-export %foreign "C:oracle_commit"
+export %foreign "C:oracle_commit,oracle-idris"
 prim__commit : AnyPtr -> PrimIO Int32
 
 ||| Roll back the current transaction.
@@ -23,5 +23,5 @@ prim__commit : AnyPtr -> PrimIO Int32
 ||| - 0 on success.
 ||| - Non-zero on failure.
 |||
-export %foreign "C:oracle_rollback"
+export %foreign "C:oracle_rollback,oracle-idris"
 prim__rollback : AnyPtr -> PrimIO Int32
