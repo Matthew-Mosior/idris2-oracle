@@ -122,6 +122,6 @@ echo "Service:   FREEPDB1"
 echo "Username:  $TEST_USER"
 echo "Password:  $TEST_PASSWORD"
 echo
-echo "The schema is installed."
-echo "Test data will be reset by resetDatabase() before each test."
+echo "Schema installation is handled by installSchema."
+echo "Test data is reset by resetDatabase before each test."
 echo "=================================================="

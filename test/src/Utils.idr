@@ -204,7 +204,7 @@ seedBlobs conn =
 export
 withTestConnection : (Connection -> IO a) -> IO a
 withTestConnection action = do
-  conn <- connect testConnectInfo >>= die ""
+  conn <- connect testConnectInfo >>= die "could not connect to Oracle"
   result <- action conn
   disconnect conn
   pure result

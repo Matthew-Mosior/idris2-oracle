@@ -6,13 +6,12 @@ license    = "BSD-3 Clause"
 version    = 0.1.0
 sourcedir  = "src"
 depends    = base
-           , array
            , bytestring
-           , cptr
            , elab-util
            , elin
-           , posix
 modules    = Oracle
+           , Oracle.Connection
+           , Oracle.Context
            , Oracle.Error
            , Oracle.Query
            , Oracle.Statement
