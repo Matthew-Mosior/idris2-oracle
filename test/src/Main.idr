@@ -1,11 +1,14 @@
 module Main
 
+import ConnectInfoTest
 import ConnectionTests
+import Oracle
 import System
+import Utils
 
 main : IO ()
 main = do
-  Right _ <-
+  result <-
     withConnection connectinfo $ \conn =>
       installSchema conn >>== \_ =>
       resetDatabase conn >>== \_ => do
@@ -14,6 +17,8 @@ main = do
         test_SequentialConnections conn
         test_InvalidPassword conn
         test_InvalidService conn
-    | Left err =>
-        die (show err)
-  pure ()
+  case result of
+    Left err =>
+      die (show err)
+    Right _  =>
+      pure ()

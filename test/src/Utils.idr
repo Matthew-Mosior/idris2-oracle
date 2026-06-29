@@ -1,5 +1,8 @@
 module Utils
 
+import ConnectInfoTest
+import Data.ByteString
+import Oracle
 import System
 
 ||| Execute an Oracle operation while ignoring ORA-00955 ("name is already used by an existing object").
@@ -47,6 +50,7 @@ installSchema conn =
                         active     NUMBER(1) DEFAULT 1
                     )
                     """
+                    []
     )
     >>== \_ =>
   ignoreAlreadyExists
@@ -56,6 +60,7 @@ installSchema conn =
                         INCREMENT BY 1
                         NOCACHE
                     """
+                    []
     )
     >>== \_ =>
   ignoreAlreadyExists
@@ -63,6 +68,7 @@ installSchema conn =
                     CREATE INDEX people_last_name_idx
                     ON people(last_name)
                     """
+                    []
     )
     >>== \_ =>
   ignoreAlreadyExists
@@ -74,6 +80,7 @@ installSchema conn =
                         clob_value  CLOB
                     )
                     """
+                    []
     )
     >>== \_ =>
   ignoreAlreadyExists
@@ -83,6 +90,7 @@ installSchema conn =
                         INCREMENT BY 1
                         NOCACHE
                     """
+                    []
     )
 
 ||| Remove all rows from every integration test table.
@@ -94,9 +102,9 @@ installSchema conn =
 export
 clearTables : Connection -> IO (Either OracleError ())
 clearTables conn =
-  execute_ conn "DELETE FROM blobs"
+  execute_ conn "DELETE FROM blobs" []
     >>== \_ =>
-  execute_ conn "DELETE FROM people"
+  execute_ conn "DELETE FROM people" []
 
 ||| Populate the PEOPLE table with the standard integration test fixture.
 |||
@@ -197,18 +205,6 @@ seedBlobs conn =
         (OracleBlob (fromString "Hello from Oracle BLOB"))
     ]
 
-||| Execute an integration test against the test database.
-|||
-||| A connection is automatically established and closed.
-|||
-export
-withTestConnection : (Connection -> IO a) -> IO a
-withTestConnection action = do
-  conn <- connect testConnectInfo >>= die "could not connect to Oracle"
-  result <- action conn
-  disconnect conn
-  pure result
-
 ||| Restore the integration database to its standard fixture.
 |||
 ||| Existing rows are removed before the default PEOPLE and BLOBS fixtures are recreated.
@@ -216,18 +212,19 @@ withTestConnection action = do
 ||| This function is intended to be called before each integration test (or test group).
 |||
 export
-resetDatabase : IO ()
-resetDatabase =
-  withTestConnection $ \conn => do
-    result <- clearTables conn
+resetDatabase : Connection -> IO (Either OracleError ())
+resetDatabase _ = do
+  result <-
+    withConnection connectinfo $ \conn =>
+      clearTables conn
       >>== \_ =>
-         seedPeople conn
+        seedPeople conn
       >>== \_ =>
-         seedBlobs conn
+        seedBlobs conn
       >>== \_ =>
-         commit conn
-    case result of
-      Left err =>
-        die (show err)
-      Right () =>
-        pure ()
+        commit conn
+  case result of
+    Left err =>
+      die (show err)
+    Right () =>
+      pure (Right ())

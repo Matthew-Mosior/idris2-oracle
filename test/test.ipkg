@@ -3,7 +3,8 @@ package oracle-test
 version    = 0.1.0
 authors    = "Matthew-Mosior"
 sourcedir  = "src"
-depends    = oracle
+depends    = bytestring
+           , oracle
 main       = Main
 executable = "oracle-test"
 prebuild   = "bash startup.sh"
