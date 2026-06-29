@@ -2,6 +2,7 @@ module Oracle
 
 import public Oracle.Connection
 import public Oracle.Context
+import public Oracle.Internal.Pointer
 import public Oracle.Query
 import public Oracle.Statement
 import public Oracle.Transaction

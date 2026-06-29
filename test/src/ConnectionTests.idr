@@ -3,6 +3,26 @@ module ConnectionTests
 import Oracle
 import System
 
+export
+username : String
+username = "idris"
+
+export
+password : String
+password = "idris"
+
+export
+host : String
+host = "127.0.0.1"
+
+export
+port : Nat
+port = 1521
+
+export
+service : String
+service = "FREEPDB1"
+
 ||| Connection information for the Oracle integration test database.
 |||
 ||| This configuration matches the Docker container created by `startup.sh`.
@@ -26,11 +46,11 @@ export
 connectinfo : ConnectInfo
 connectinfo =
   MkConnectInfo
-    "idris"
-    "idris"
-    "127.0.0.1"
-    1521
-    "FREEPDB1"
+    username
+    password
+    host
+    port
+    service
 
 ||| Verify that a connection can be opened using valid credentials.
 |||
@@ -59,6 +79,7 @@ test_WithConnection cfg = do
       execute_
         conn
         "SELECT 1 FROM dual"
+        []
   case result of
     Left err =>
       die (show err)
