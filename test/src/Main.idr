@@ -11,12 +11,12 @@ main = do
   result <-
     withConnection connectinfo $ \conn =>
       installSchema conn >>== \_ =>
-      resetDatabase conn >>== \_ => do
-        test_OpenConnection conn
-        test_WithConnection conn
-        test_SequentialConnections conn
-        test_InvalidPassword conn
-        test_InvalidService conn
+      resetDatabase conn >>== \_ =>
+      test_OpenConnection connectinfo >>== \_ =>
+      test_WithConnection connectinfo >>== \_ =>
+      test_SequentialConnections connectinfo >>== \_ =>
+      test_InvalidPassword connectinfo >>== \_ =>
+      test_InvalidService connectinfo
   case result of
     Left err =>
       die (show err)

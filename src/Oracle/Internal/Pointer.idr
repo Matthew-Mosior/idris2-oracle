@@ -15,10 +15,3 @@ public export
 record Statement where
   constructor MkStatement
   ptr : AnyPtr
-
-||| Internal session pool handle.
-|||
-public export
-record Pool where
-  constructor MkPool
-  ptr : AnyPtr

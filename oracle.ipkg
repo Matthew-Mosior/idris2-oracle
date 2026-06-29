@@ -33,6 +33,7 @@ modules    = Oracle
            , Oracle.Types.BindParameter
            , Oracle.Types.ColumnInfo
            , Oracle.Types.ConnectInfo
+           , Oracle.Types.Context
            , Oracle.Types.DateTime
            , Oracle.Types.Error
            , Oracle.Types.Instances
