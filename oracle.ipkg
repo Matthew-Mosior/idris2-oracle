@@ -38,7 +38,6 @@ modules    = Oracle
            , Oracle.Types.Error
            , Oracle.Types.Instances
            , Oracle.Types.OracleType
-           , Oracle.Types.PoolConfig
            , Oracle.Types.Row
            , Oracle.Types.Value
 prebuild   = "make -C support"
