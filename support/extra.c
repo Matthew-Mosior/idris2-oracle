@@ -426,3 +426,71 @@ void oracle_lob_free_buffer(char *buffer)
 {
     free(buffer);
 }
+
+dpiConn *oracle_connect(const char *username, const char *password, const char *connectString)
+{
+    dpiContext *context = NULL;
+    dpiConn *conn = NULL;
+
+    dpiErrorInfo error;
+
+    dpiCommonCreateParams commonParams;
+    dpiConnCreateParams connParams;
+
+    memset(&error, 0, sizeof(error));
+    memset(&commonParams, 0, sizeof(commonParams));
+    memset(&connParams, 0, sizeof(connParams));
+
+    if (dpiContext_create(
+            DPI_MAJOR_VERSION,
+            DPI_MINOR_VERSION,
+            &context,
+            &error) < 0)
+    {
+        return NULL;
+    }
+
+    if (dpiContext_initCommonCreateParams(
+            context,
+            &commonParams) < 0)
+    {
+        dpiContext_destroy(context);
+        return NULL;
+    }
+
+    if (dpiContext_initConnCreateParams(
+            context,
+            &connParams) < 0)
+    {
+        dpiContext_destroy(context);
+        return NULL;
+    }
+
+    if (dpiConn_create(
+            context,
+            username,
+            strlen(username),
+            password,
+            strlen(password),
+            connectString,
+            strlen(connectString),
+            &commonParams,
+            &connParams,
+            &conn) < 0)
+    {
+        dpiContext_destroy(context);
+        return NULL;
+    }
+
+    dpiContext_destroy(context);
+
+    return conn;
+}
+
+void oracle_disconnect(dpiConn *conn)
+{
+    if (!conn)
+        return;
+
+    dpiConn_release(conn);
+}

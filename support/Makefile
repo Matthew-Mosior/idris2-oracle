@@ -1,7 +1,10 @@
-TARGET = oracle-idris
-TARGET_VERSION ?= 0.0.1
+IDRIS := idris2
 
-INSTALLDIR = ../lib
+TARGET = oracle-idris
+TARGET_VERSION ?= 0.1.0
+
+INSTALLDIR = `${IDRIS} --libdir`/oracle-${TARGET_VERSION}
+LIBDIR = "${INSTALLDIR}/lib"
 
 LDFLAGS =
 CFLAGS = -O2 -g -Wall -Wextra -fPIC
@@ -9,9 +12,9 @@ CFLAGS = -O2 -g -Wall -Wextra -fPIC
 CC_VERSION = $(shell $(CC) --version)
 
 ifeq ($(findstring clang,$(CC_VERSION)),clang)
- DYLIB_WORKAROUND = cp "${INSTALLDIR}/${TARGET}" "${INSTALLDIR}/${TARGET}.dylib"
+ DYLIB_WORKAROUND = cp "$(LIBDIR)/$(TARGET)" "$(LIBDIR)/$(TARGET).dylib"
 else
- DYLIB_WORKAROUND = cp "${INSTALLDIR}/${TARGET}" "${INSTALLDIR}/${TARGET}.so"
+ DYLIB_WORKAROUND = cp "$(LIBDIR)/$(TARGET)" "$(LIBDIR)/$(TARGET).so"
  LDFLAGS += -fuse-ld=lld
 endif
 
@@ -21,17 +24,16 @@ OBJS = $(SRCS:.c=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ -I $^
+	$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
 
 .PHONY: clean
 
-clean :
+clean:
 	rm -f $(OBJS) $(TARGET)
-	rm -rf $(INSTALLDIR)
 
 .PHONY: install
 
 install:
-	mkdir -p $(INSTALLDIR)
-	install $(TARGET) $(INSTALLDIR)
+	mkdir -p $(LIBDIR)
+	install $(TARGET) $(LIBDIR)
 	$(DYLIB_WORKAROUND)
