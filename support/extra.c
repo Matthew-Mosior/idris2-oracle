@@ -207,6 +207,26 @@ int32_t oracle_bind_null(dpiStmt *stmt, const char *name)
     return rc;
 }
 
+int32_t oracle_bind_bool(dpiStmt *stmt, const char *name, int value)
+{
+    dpiData data;
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setBool(&data, value != 0);
+
+    int rc = dpiStmt_bindValueByName(
+        stmt,
+        name,
+        strlen(name),
+        DPI_NATIVE_TYPE_BOOLEAN,
+        &data);
+
+    if (rc < 0)
+        oracle_capture_last_error();
+
+    return rc;
+}
+
 int32_t oracle_bind_string(dpiStmt *stmt, const char *name, const char *value)
 {
     dpiData data;
@@ -267,9 +287,55 @@ int32_t oracle_bind_double(dpiStmt *stmt, const char *name, double value)
     return rc;
 }
 
+int32_t oracle_bind_clob(dpiStmt *stmt, const char *name, const char *value)
+{
+    dpiData data;
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setBytes(
+        &data,
+        (char *)value,
+        strlen(value));
+
+    int rc = dpiStmt_bindValueByName(
+        stmt,
+        name,
+        strlen(name),
+        DPI_NATIVE_TYPE_BYTES,
+        &data);
+
+    if (rc < 0)
+        oracle_capture_last_error();
+
+    return rc;
+}
+
+int32_t oracle_bind_blob(dpiStmt *stmt, const char *name, const char *value)
+{
+    dpiData data;
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setBytes(
+        &data,
+        (char *)value,
+        strlen(value));
+
+    int rc = dpiStmt_bindValueByName(
+        stmt,
+        name,
+        strlen(name),
+        DPI_NATIVE_TYPE_BYTES,
+        &data);
+
+    if (rc < 0)
+        oracle_capture_last_error();
+
+    return rc;
+}
+
 dpiStmt *oracle_prepare_stmt(dpiConn *conn, const char *sql)
 {
-    dpiStmt *stmt;
+    dpiStmt *stmt = NULL;
 
     if (dpiConn_prepareStmt(
             conn,
