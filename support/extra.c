@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,24 +6,86 @@
 
 static dpiErrorInfo g_last_error;
 static dpiContext *g_context = NULL;
+static int g_has_error = 0;
+
+static void oracle_capture_error(const dpiErrorInfo *error)
+{
+    if (error == NULL)
+        return;
+
+    memset(&g_last_error, 0, sizeof(g_last_error));
+
+    g_last_error.code = error->code;
+    g_last_error.message = error->message;
+    g_last_error.messageLength = error->messageLength;
+    g_last_error.fnName = error->fnName;
+    g_last_error.isRecoverable = error->isRecoverable;
+    g_last_error.isWarning = error->isWarning;
+
+    /*
+     * ODPI-C sometimes leaves code as 0 for initialization
+     * errors (for example DPI-1047).
+     */
+    if (g_last_error.code == 0 && error->message != NULL)
+    {
+        int parsed;
+
+        if (sscanf(error->message, "DPI-%d:", &parsed) == 1)
+        {
+            g_last_error.code = parsed;
+        }
+    }
+
+    g_has_error = 1;
+}
 
 static void oracle_capture_last_error(void)
 {
-    memset(&g_last_error, 0, sizeof(g_last_error));
+    if (g_context == NULL)
+        return;
 
-    if (g_context != NULL) {
-        dpiContext_getError(g_context, &g_last_error);
+    dpiErrorInfo error;
+    memset(&error, 0, sizeof(error));
+
+    dpiContext_getError(
+        g_context,
+        &error
+    );
+
+    oracle_capture_error(&error);
+}
+
+static int oracle_init_context(void)
+{
+    if (g_context != NULL)
+        return 0;
+
+    dpiErrorInfo error;
+
+    if (dpiContext_create(
+            DPI_MAJOR_VERSION,
+            DPI_MINOR_VERSION,
+            &g_context,
+            &error) != DPI_SUCCESS)
+    {
+        oracle_capture_error(&error);
+        return -1;
     }
+
+    return 0;
 }
 
 int32_t get_error_code(void)
 {
+    if (!g_has_error)
+        return 0;
+
     return (int32_t) g_last_error.code;
 }
 
 const char *get_error_message(void)
 {
-    if (g_last_error.message[0] == '\0')
+    if (!g_has_error)
         return "";
 
     return g_last_error.message;
@@ -414,47 +477,32 @@ void oracle_lob_free_buffer(char *buffer)
     free(buffer);
 }
 
-dpiConn *oracle_connect(const char *username, const char *password, const char *connectString)
+void* oracle_connect(const char* username, const char* password, const char* connect_string)
 {
-    dpiErrorInfo error;
-
-    dpiCommonCreateParams commonParams;
-    dpiConnCreateParams connParams;
+    if (oracle_init_context() != 0)
+        return NULL;
 
     dpiConn *conn = NULL;
 
-    if (dpiContext_create(
-            DPI_MAJOR_VERSION,
-            DPI_MINOR_VERSION,
-            &g_context,
-            &error) < 0)
-    {
-        memcpy(&g_last_error, &error, sizeof(error));
-        return NULL;
-    }
+    dpiErrorInfo error;
+    memset(&error, 0, sizeof(error));
 
-    dpiContext_initCommonCreateParams(
+    int rc = dpiConn_create(
         g_context,
-        &commonParams);
+        username,
+        strlen(username),
+        password,
+        strlen(password),
+        connect_string,
+        strlen(connect_string),
+        NULL,
+        NULL,
+        &conn
+    );
 
-
-    dpiContext_initConnCreateParams(
-        g_context,
-        &connParams);
-
-    if (dpiConn_create(
-            g_context,
-            username,
-            strlen(username),
-            password,
-            strlen(password),
-            connectString,
-            strlen(connectString),
-            &commonParams,
-            &connParams,
-            &conn) < 0)
+    if (rc != DPI_SUCCESS)
     {
-        oracle_capture_last_error();
+        oracle_capture_error(&error);
         return NULL;
     }
 
