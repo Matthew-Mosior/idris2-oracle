@@ -4,36 +4,65 @@ TARGET = oracle-idris
 TARGET_VERSION ?= 0.1.0
 
 INSTALLDIR = `${IDRIS} --libdir`/oracle-${TARGET_VERSION}
-LIBDIR = "${INSTALLDIR}/lib"
+LIBDIR = "$(INSTALLDIR)/lib"
 
 LDFLAGS =
 CFLAGS = -O2 -g -Wall -Wextra -fPIC
 
 CC_VERSION = $(shell $(CC) --version)
+MACHINE := $(shell $(CC) -dumpmachine)
+
+ifneq (,$(findstring cygwin,$(MACHINE)))
+	OS := windows
+	SHLIB_SUFFIX := .dll
+else ifneq (,$(findstring mingw,$(MACHINE)))
+	OS := windows
+	SHLIB_SUFFIX := .dll
+else ifneq (,$(findstring windows,$(MACHINE)))
+	OS := windows
+	SHLIB_SUFFIX := .dll
+else ifneq (,$(findstring darwin,$(MACHINE)))
+	OS := darwin
+	SHLIB_SUFFIX := .dylib
+else ifneq (,$(findstring bsd,$(MACHINE)))
+	OS := bsd
+	SHLIB_SUFFIX := .so
+else
+	OS := linux
+	SHLIB_SUFFIX := .so
+endif
 
 ifeq ($(findstring clang,$(CC_VERSION)),clang)
- DYLIB_WORKAROUND = cp "$(LIBDIR)/$(TARGET)" "$(LIBDIR)/$(TARGET).dylib"
+	LDFLAGS +=
 else
- DYLIB_WORKAROUND = cp "$(LIBDIR)/$(TARGET)" "$(LIBDIR)/$(TARGET).so"
- LDFLAGS += -fuse-ld=lld
+	LDFLAGS += -fuse-ld=lld
 endif
 
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
+DEPS = $(OBJS:.o=.d)
 
-all: $(TARGET)
+all: $(TARGET)$(SHLIB_SUFFIX)
 
-$(TARGET): $(OBJS)
+$(TARGET)$(SHLIB_SUFFIX): $(OBJS)
 	$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $@ $^
+
+-include $(DEPS)
+
+%.d: %.c
+	@$(CPP) $(CFLAGS) $< -MM -MT $(@:.d=.o) > $@
 
 .PHONY: clean
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(DEPS) $(TARGET)$(SHLIB_SUFFIX)
+
+.PHONY: cleandep
+
+cleandep: clean
 
 .PHONY: install
 
 install:
-	mkdir -p $(LIBDIR)
-	install $(TARGET) $(LIBDIR)
-	$(DYLIB_WORKAROUND)
+	@if ! [ -d $(LIBDIR) ]; then mkdir -p $(LIBDIR); fi
+	install $(TARGET)$(SHLIB_SUFFIX) $(LIBDIR)

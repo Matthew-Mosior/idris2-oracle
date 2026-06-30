@@ -1,3 +1,4 @@
 build/
+support/*.d
 support/*.o
-support/oracle-idris
+support/oracle-idris.so
