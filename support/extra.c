@@ -3,17 +3,41 @@
 #include <string.h>
 #include "dpi.h"
 
+static dpiErrorInfo g_last_error;
+static dpiContext *g_context = NULL;
+
+static void oracle_capture_last_error(void)
+{
+    memset(&g_last_error, 0, sizeof(g_last_error));
+
+    if (g_context != NULL) {
+        dpiContext_getError(g_context, &g_last_error);
+    }
+}
+
+int32_t get_error_code(void)
+{
+    return (int32_t) g_last_error.code;
+}
+
+const char *get_error_message(void)
+{
+    if (g_last_error.message[0] == '\0')
+        return "";
+
+    return g_last_error.message;
+}
+
 dpiQueryInfo *oracle_query_info(dpiStmt *stmt, int32_t column)
 {
-    dpiQueryInfo *info;
-
-    info = malloc(sizeof(dpiQueryInfo));
+    dpiQueryInfo *info = malloc(sizeof(dpiQueryInfo));
 
     if (!info)
         return NULL;
 
     if (dpiStmt_getQueryInfo(stmt, column + 1, info) < 0) {
         free(info);
+        oracle_capture_last_error();
         return NULL;
     }
 
@@ -32,15 +56,12 @@ int32_t oracle_query_info_type(dpiQueryInfo *info)
 
 char *oracle_query_info_name(dpiQueryInfo *info)
 {
-    char *result;
-
-    result = malloc(info->nameLength + 1);
+    char *result = malloc(info->nameLength + 1);
 
     if (!result)
         return NULL;
 
     memcpy(result, info->name, info->nameLength);
-
     result[info->nameLength] = '\0';
 
     return result;
@@ -85,12 +106,9 @@ char *oracle_data_string(dpiData *data)
     if (!data)
         return NULL;
 
-    dpiBytes *bytes;
-    char *result;
+    dpiBytes *bytes = &data->value.asBytes;
 
-    bytes = &data->value.asBytes;
-
-    result = malloc(bytes->length + 1);
+    char *result = malloc(bytes->length + 1);
 
     if (!result)
         return NULL;
@@ -109,90 +127,81 @@ void oracle_string_free(char *str)
 int32_t oracle_bind_null(dpiStmt *stmt, const char *name)
 {
     dpiData data;
-
     memset(&data, 0, sizeof(data));
 
     data.isNull = 1;
 
-    return dpiStmt_bindValueByName(
+    int rc = dpiStmt_bindValueByName(
         stmt,
         name,
-        (uint32_t) strlen(name),
+        strlen(name),
         DPI_NATIVE_TYPE_BYTES,
         &data);
+
+    if (rc < 0)
+        oracle_capture_last_error();
+
+    return rc;
 }
 
 int32_t oracle_bind_string(dpiStmt *stmt, const char *name, const char *value)
 {
     dpiData data;
-
     memset(&data, 0, sizeof(data));
 
-    dpiData_setBytes(
-        &data,
-        (char *) value,
-        (uint32_t) strlen(value));
+    dpiData_setBytes(&data, (char *) value, strlen(value));
 
-    return dpiStmt_bindValueByName(
+    int rc = dpiStmt_bindValueByName(
         stmt,
         name,
-        (uint32_t) strlen(name),
+        strlen(name),
         DPI_NATIVE_TYPE_BYTES,
         &data);
+
+    if (rc < 0)
+        oracle_capture_last_error();
+
+    return rc;
 }
 
 int32_t oracle_bind_int64(dpiStmt *stmt, const char *name, int64_t value)
 {
     dpiData data;
-
     memset(&data, 0, sizeof(data));
 
-    dpiData_setInt64(
-        &data,
-        value);
+    dpiData_setInt64(&data, value);
 
-    return dpiStmt_bindValueByName(
+    int rc = dpiStmt_bindValueByName(
         stmt,
         name,
-        (uint32_t) strlen(name),
+        strlen(name),
         DPI_NATIVE_TYPE_INT64,
         &data);
+
+    if (rc < 0)
+        oracle_capture_last_error();
+
+    return rc;
 }
 
 int32_t oracle_bind_double(dpiStmt *stmt, const char *name, double value)
 {
     dpiData data;
-
     memset(&data, 0, sizeof(data));
 
-    dpiData_setDouble(
-        &data,
-        value);
+    dpiData_setDouble(&data, value);
 
-    return dpiStmt_bindValueByName(
+    int rc = dpiStmt_bindValueByName(
         stmt,
         name,
-        (uint32_t) strlen(name),
+        strlen(name),
         DPI_NATIVE_TYPE_DOUBLE,
         &data);
-}
 
-int32_t oracle_bind_bool(dpiStmt *stmt, const char *name, int32_t value)
-{
-    dpiData data;
+    if (rc < 0)
+        oracle_capture_last_error();
 
-    memset(&data, 0, sizeof(data));
-
-    dpiData_setBool(
-        &data,
-        value != 0);
-
-    return dpiStmt_bindValueByName(
-        stmt,
-        name,
-        (uint32_t) strlen(name),
-        DPI_NATIVE_TYPE_BOOLEAN,
-        &data);
+    return rc;
 }
 
 dpiStmt *oracle_prepare_stmt(dpiConn *conn, const char *sql)
@@ -207,7 +216,10 @@ dpiStmt *oracle_prepare_stmt(dpiConn *conn, const char *sql)
             NULL,
             0,
             &stmt) < 0)
+    {
+        oracle_capture_last_error();
         return NULL;
+    }
 
     return stmt;
 }
@@ -220,13 +232,16 @@ void oracle_release_stmt(dpiStmt *stmt)
 
 int32_t oracle_execute_stmt(dpiStmt *stmt)
 {
-    uint32_t numQueryColumns;
+    uint32_t cols;
 
     if (dpiStmt_execute(
             stmt,
             DPI_MODE_EXEC_DEFAULT,
-            &numQueryColumns) < 0)
+            &cols) < 0)
+    {
+        oracle_capture_last_error();
         return -1;
+    }
 
     return 0;
 }
@@ -234,13 +249,16 @@ int32_t oracle_execute_stmt(dpiStmt *stmt)
 int32_t oracle_fetch(dpiStmt *stmt)
 {
     int found;
-    uint32_t bufferRowIndex;
+    uint32_t row;
 
     if (dpiStmt_fetch(
             stmt,
             &found,
-            &bufferRowIndex) < 0)
+            &row) < 0)
+    {
+        oracle_capture_last_error();
         return -1;
+    }
 
     return found ? 1 : 0;
 }
@@ -249,36 +267,34 @@ int32_t oracle_column_count(dpiStmt *stmt)
 {
     uint32_t count;
 
-    if (dpiStmt_getNumQueryColumns(
-            stmt,
-            &count) < 0)
+    if (dpiStmt_getNumQueryColumns(stmt, &count) < 0) {
+        oracle_capture_last_error();
         return -1;
+    }
 
-    return (int32_t) count;
+    return count;
 }
 
 char *oracle_column_name(dpiStmt *stmt, int32_t column)
 {
     dpiQueryInfo info;
-    char *result;
-    size_t len;
 
     if (dpiStmt_getQueryInfo(
             stmt,
             column + 1,
             &info) < 0)
+    {
+        oracle_capture_last_error();
         return NULL;
+    }
 
-    len = info.nameLength;
-
-    result = malloc(len + 1);
+    char *result = malloc(info.nameLength + 1);
 
     if (!result)
         return NULL;
 
-    memcpy(result, info.name, len);
-
-    result[len] = '\0';
+    memcpy(result, info.name, info.nameLength);
+    result[info.nameLength] = '\0';
 
     return result;
 }
@@ -291,24 +307,28 @@ int32_t oracle_column_type(dpiStmt *stmt, int32_t column)
             stmt,
             column + 1,
             &info) < 0)
+    {
+        oracle_capture_last_error();
         return -1;
+    }
 
     return info.typeInfo.oracleTypeNum;
 }
 
-
-
 void *oracle_column_value(dpiStmt *stmt, int32_t column)
 {
-    dpiNativeTypeNum nativeType;
+    dpiNativeTypeNum type;
     dpiData *data;
 
     if (dpiStmt_getQueryValue(
             stmt,
             column + 1,
-            &nativeType,
+            &type,
             &data) < 0)
+    {
+        oracle_capture_last_error();
         return NULL;
+    }
 
     return data;
 }
@@ -318,8 +338,10 @@ int32_t oracle_commit(dpiConn *conn)
     if (!conn)
         return -1;
 
-    if (dpiConn_commit(conn) < 0)
+    if (dpiConn_commit(conn) < 0) {
+        oracle_capture_last_error();
         return -1;
+    }
 
     return 0;
 }
@@ -329,18 +351,17 @@ int32_t oracle_rollback(dpiConn *conn)
     if (!conn)
         return -1;
 
-    if (dpiConn_rollback(conn) < 0)
+    if (dpiConn_rollback(conn) < 0) {
+        oracle_capture_last_error();
         return -1;
+    }
 
     return 0;
 }
 
 dpiLob *oracle_data_lob(dpiData *data)
 {
-    if (!data)
-        return NULL;
-
-    return data->value.asLOB;
+    return data ? data->value.asLOB : NULL;
 }
 
 int64_t oracle_lob_size(dpiLob *lob)
@@ -350,21 +371,20 @@ int64_t oracle_lob_size(dpiLob *lob)
     if (!lob)
         return -1;
 
-    if (dpiLob_getSize(lob, &size) < 0)
+    if (dpiLob_getSize(lob, &size) < 0) {
+        oracle_capture_last_error();
         return -1;
+    }
 
-    return (int64_t) size;
+    return size;
 }
 
 char *oracle_lob_read(dpiLob *lob, int64_t offset, int64_t length)
 {
-    char *buffer;
-
-    buffer = malloc(length + 1);
+    char *buffer = malloc(length + 1);
 
     if (!buffer)
         return NULL;
-
 
     if (dpiLob_readBytes(
             lob,
@@ -373,45 +393,12 @@ char *oracle_lob_read(dpiLob *lob, int64_t offset, int64_t length)
             buffer,
             NULL) < 0)
     {
+        oracle_capture_last_error();
         free(buffer);
         return NULL;
     }
-
 
     buffer[length] = 0;
-
-    return buffer;
-}
-
-char *oracle_clob_read(dpiLob *lob)
-{
-    uint64_t size;
-    char *buffer;
-
-
-    if (dpiLob_getSize(lob, &size) < 0)
-        return NULL;
-
-
-    buffer = malloc(size + 1);
-
-    if (!buffer)
-        return NULL;
-
-
-    if (dpiLob_readBytes(
-            lob,
-            1,
-            size,
-            buffer,
-            NULL) < 0)
-    {
-        free(buffer);
-        return NULL;
-    }
-
-
-    buffer[size] = 0;
 
     return buffer;
 }
@@ -429,45 +416,34 @@ void oracle_lob_free_buffer(char *buffer)
 
 dpiConn *oracle_connect(const char *username, const char *password, const char *connectString)
 {
-    dpiContext *context = NULL;
-    dpiConn *conn = NULL;
-
     dpiErrorInfo error;
 
     dpiCommonCreateParams commonParams;
     dpiConnCreateParams connParams;
 
-    memset(&error, 0, sizeof(error));
-    memset(&commonParams, 0, sizeof(commonParams));
-    memset(&connParams, 0, sizeof(connParams));
+    dpiConn *conn = NULL;
 
     if (dpiContext_create(
             DPI_MAJOR_VERSION,
             DPI_MINOR_VERSION,
-            &context,
+            &g_context,
             &error) < 0)
     {
+        memcpy(&g_last_error, &error, sizeof(error));
         return NULL;
     }
 
-    if (dpiContext_initCommonCreateParams(
-            context,
-            &commonParams) < 0)
-    {
-        dpiContext_destroy(context);
-        return NULL;
-    }
+    dpiContext_initCommonCreateParams(
+        g_context,
+        &commonParams);
 
-    if (dpiContext_initConnCreateParams(
-            context,
-            &connParams) < 0)
-    {
-        dpiContext_destroy(context);
-        return NULL;
-    }
+
+    dpiContext_initConnCreateParams(
+        g_context,
+        &connParams);
 
     if (dpiConn_create(
-            context,
+            g_context,
             username,
             strlen(username),
             password,
@@ -478,19 +454,15 @@ dpiConn *oracle_connect(const char *username, const char *password, const char *
             &connParams,
             &conn) < 0)
     {
-        dpiContext_destroy(context);
+        oracle_capture_last_error();
         return NULL;
     }
-
-    dpiContext_destroy(context);
 
     return conn;
 }
 
 void oracle_disconnect(dpiConn *conn)
 {
-    if (!conn)
-        return;
-
-    dpiConn_release(conn);
+    if (conn)
+        dpiConn_release(conn);
 }
