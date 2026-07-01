@@ -33,20 +33,6 @@ static void oracle_release_vars(oracle_stmt *stmt)
     stmt->var_count = 0;
 }
 
-static void oracle_release_lobs(oracle_stmt *stmt)
-{
-    if (!stmt)
-        return;
-
-    for (uint32_t i = 0; i < stmt->lob_count; i++)
-    {
-        if (stmt->lobs[i])
-            dpiLob_release(stmt->lobs[i]);
-    }
-
-    stmt->lob_count = 0;
-}
-
 static void oracle_capture_error(const dpiErrorInfo *error)
 {
     if (error == NULL)
@@ -334,6 +320,7 @@ int32_t oracle_bind_clob(oracle_stmt *stmt, const char *name, const char *value)
 {
     dpiVar *var = NULL;
     dpiData *data = NULL;
+    dpiLob *lob = NULL;
 
     if (dpiConn_newVar(
             stmt->conn,
@@ -354,7 +341,7 @@ int32_t oracle_bind_clob(oracle_stmt *stmt, const char *name, const char *value)
     if (dpiStmt_bindByName(
             stmt->stmt,
             name,
-            strlen(name),
+            (uint32_t) strlen(name),
             var) < 0)
     {
         oracle_capture_last_error();
@@ -362,10 +349,12 @@ int32_t oracle_bind_clob(oracle_stmt *stmt, const char *name, const char *value)
         return -1;
     }
 
-    dpiLob *lob = data->value.asLOB;
-
-    if (!lob)
+    if (dpiConn_newTempLob(
+            stmt->conn,
+            DPI_ORACLE_TYPE_CLOB,
+            &lob) < 0)
     {
+        oracle_capture_last_error();
         dpiVar_release(var);
         return -1;
     }
@@ -374,20 +363,35 @@ int32_t oracle_bind_clob(oracle_stmt *stmt, const char *name, const char *value)
             lob,
             1,
             value,
-            strlen(value)) < 0)
+            (uint64_t) strlen(value)) < 0)
     {
         oracle_capture_last_error();
+        dpiLob_release(lob);
         dpiVar_release(var);
         return -1;
     }
 
-    if (stmt->var_count >= 64)
+    if (dpiVar_setFromLob(
+            var,
+            0,
+            lob) < 0)
     {
+        oracle_capture_last_error();
+        dpiLob_release(lob);
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64 ||
+        stmt->lob_count >= 64)
+    {
+        dpiLob_release(lob);
         dpiVar_release(var);
         return -1;
     }
 
     stmt->vars[stmt->var_count++] = var;
+    stmt->lobs[stmt->lob_count++] = lob;
 
     return 0;
 }
@@ -396,6 +400,7 @@ int32_t oracle_bind_blob(oracle_stmt *stmt, const char *name, const char *value)
 {
     dpiVar *var = NULL;
     dpiData *data = NULL;
+    dpiLob *lob = NULL;
 
     if (dpiConn_newVar(
             stmt->conn,
@@ -416,7 +421,7 @@ int32_t oracle_bind_blob(oracle_stmt *stmt, const char *name, const char *value)
     if (dpiStmt_bindByName(
             stmt->stmt,
             name,
-            strlen(name),
+            (uint32_t) strlen(name),
             var) < 0)
     {
         oracle_capture_last_error();
@@ -424,9 +429,10 @@ int32_t oracle_bind_blob(oracle_stmt *stmt, const char *name, const char *value)
         return -1;
     }
 
-    dpiLob *lob = data->value.asLOB;
-
-    if (!lob)
+    if (dpiConn_newTempLob(
+            stmt->conn,
+            DPI_ORACLE_TYPE_BLOB,
+            &lob) < 0)
     {
         oracle_capture_last_error();
         dpiVar_release(var);
@@ -437,20 +443,35 @@ int32_t oracle_bind_blob(oracle_stmt *stmt, const char *name, const char *value)
             lob,
             1,
             value,
-            strlen(value)) < 0)
+            (uint64_t) strlen(value)) < 0)
     {
         oracle_capture_last_error();
+        dpiLob_release(lob);
         dpiVar_release(var);
         return -1;
     }
 
-    if (stmt->var_count >= 64)
+    if (dpiVar_setFromLob(
+            var,
+            0,
+            lob) < 0)
     {
+        oracle_capture_last_error();
+        dpiLob_release(lob);
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64 ||
+        stmt->lob_count >= 64)
+    {
+        dpiLob_release(lob);
         dpiVar_release(var);
         return -1;
     }
 
     stmt->vars[stmt->var_count++] = var;
+    stmt->lobs[stmt->lob_count++] = lob;
 
     return 0;
 }
@@ -489,7 +510,6 @@ void oracle_release_stmt(oracle_stmt *stmt)
         return;
 
     oracle_release_vars(stmt);
-    oracle_release_lobs(stmt);
 
     if (stmt->stmt)
         dpiStmt_release(stmt->stmt);
@@ -499,7 +519,10 @@ void oracle_release_stmt(oracle_stmt *stmt)
 
 int32_t oracle_execute_stmt(oracle_stmt *stmt)
 {
-    uint32_t cols;
+    uint32_t cols = 0;
+
+    if (!stmt || !stmt->stmt)
+        return -1;
 
     if (dpiStmt_execute(
             stmt->stmt,
