@@ -8,6 +8,45 @@ static dpiErrorInfo g_last_error;
 static dpiContext *g_context = NULL;
 static int g_has_error = 0;
 
+typedef struct {
+    dpiConn *conn;
+    dpiStmt *stmt;
+
+    dpiVar *vars[64];
+    uint32_t var_count;
+
+    dpiLob *lobs[64];
+    uint32_t lob_count;
+} oracle_stmt;
+
+static void oracle_release_vars(oracle_stmt *stmt)
+{
+    if (!stmt)
+        return;
+
+    for (uint32_t i = 0; i < stmt->var_count; i++)
+    {
+        if (stmt->vars[i])
+            dpiVar_release(stmt->vars[i]);
+    }
+
+    stmt->var_count = 0;
+}
+
+static void oracle_release_lobs(oracle_stmt *stmt)
+{
+    if (!stmt)
+        return;
+
+    for (uint32_t i = 0; i < stmt->lob_count; i++)
+    {
+        if (stmt->lobs[i])
+            dpiLob_release(stmt->lobs[i]);
+    }
+
+    stmt->lob_count = 0;
+}
+
 static void oracle_capture_error(const dpiErrorInfo *error)
 {
     if (error == NULL)
@@ -91,14 +130,18 @@ const char *get_error_message(void)
     return g_last_error.message;
 }
 
-dpiQueryInfo *oracle_query_info(dpiStmt *stmt, int32_t column)
+dpiQueryInfo *oracle_query_info(oracle_stmt *stmt, int32_t column)
 {
     dpiQueryInfo *info = malloc(sizeof(dpiQueryInfo));
 
     if (!info)
         return NULL;
 
-    if (dpiStmt_getQueryInfo(stmt, column + 1, info) < 0) {
+    if (dpiStmt_getQueryInfo(
+            stmt->stmt,
+            column + 1,
+            info) < 0)
+    {
         free(info);
         oracle_capture_last_error();
         return NULL;
@@ -187,7 +230,7 @@ void oracle_string_free(char *str)
     free(str);
 }
 
-int32_t oracle_bind_null(dpiStmt *stmt, const char *name)
+int32_t oracle_bind_null(oracle_stmt *stmt, const char *name)
 {
     dpiData data;
     memset(&data, 0, sizeof(data));
@@ -195,7 +238,7 @@ int32_t oracle_bind_null(dpiStmt *stmt, const char *name)
     data.isNull = 1;
 
     int rc = dpiStmt_bindValueByName(
-        stmt,
+        stmt->stmt,
         name,
         strlen(name),
         DPI_NATIVE_TYPE_BYTES,
@@ -207,7 +250,7 @@ int32_t oracle_bind_null(dpiStmt *stmt, const char *name)
     return rc;
 }
 
-int32_t oracle_bind_bool(dpiStmt *stmt, const char *name, int value)
+int32_t oracle_bind_bool(oracle_stmt *stmt, const char *name, int value)
 {
     dpiData data;
     memset(&data, 0, sizeof(data));
@@ -215,7 +258,7 @@ int32_t oracle_bind_bool(dpiStmt *stmt, const char *name, int value)
     dpiData_setBool(&data, value != 0);
 
     int rc = dpiStmt_bindValueByName(
-        stmt,
+        stmt->stmt,
         name,
         strlen(name),
         DPI_NATIVE_TYPE_BOOLEAN,
@@ -227,7 +270,7 @@ int32_t oracle_bind_bool(dpiStmt *stmt, const char *name, int value)
     return rc;
 }
 
-int32_t oracle_bind_string(dpiStmt *stmt, const char *name, const char *value)
+int32_t oracle_bind_string(oracle_stmt *stmt, const char *name, const char *value)
 {
     dpiData data;
     memset(&data, 0, sizeof(data));
@@ -235,7 +278,7 @@ int32_t oracle_bind_string(dpiStmt *stmt, const char *name, const char *value)
     dpiData_setBytes(&data, (char *) value, strlen(value));
 
     int rc = dpiStmt_bindValueByName(
-        stmt,
+        stmt->stmt,
         name,
         strlen(name),
         DPI_NATIVE_TYPE_BYTES,
@@ -247,7 +290,7 @@ int32_t oracle_bind_string(dpiStmt *stmt, const char *name, const char *value)
     return rc;
 }
 
-int32_t oracle_bind_int64(dpiStmt *stmt, const char *name, int64_t value)
+int32_t oracle_bind_int64(oracle_stmt *stmt, const char *name, int64_t value)
 {
     dpiData data;
     memset(&data, 0, sizeof(data));
@@ -255,7 +298,7 @@ int32_t oracle_bind_int64(dpiStmt *stmt, const char *name, int64_t value)
     dpiData_setInt64(&data, value);
 
     int rc = dpiStmt_bindValueByName(
-        stmt,
+        stmt->stmt,
         name,
         strlen(name),
         DPI_NATIVE_TYPE_INT64,
@@ -267,7 +310,7 @@ int32_t oracle_bind_int64(dpiStmt *stmt, const char *name, int64_t value)
     return rc;
 }
 
-int32_t oracle_bind_double(dpiStmt *stmt, const char *name, double value)
+int32_t oracle_bind_double(oracle_stmt *stmt, const char *name, double value)
 {
     dpiData data;
     memset(&data, 0, sizeof(data));
@@ -275,7 +318,7 @@ int32_t oracle_bind_double(dpiStmt *stmt, const char *name, double value)
     dpiData_setDouble(&data, value);
 
     int rc = dpiStmt_bindValueByName(
-        stmt,
+        stmt->stmt,
         name,
         strlen(name),
         DPI_NATIVE_TYPE_DOUBLE,
@@ -287,55 +330,139 @@ int32_t oracle_bind_double(dpiStmt *stmt, const char *name, double value)
     return rc;
 }
 
-int32_t oracle_bind_clob(dpiStmt *stmt, const char *name, const char *value)
+int32_t oracle_bind_clob(oracle_stmt *stmt, const char *name, const char *value)
 {
-    dpiData data;
-    memset(&data, 0, sizeof(data));
+    dpiVar *var = NULL;
+    dpiData *data = NULL;
 
-    dpiData_setBytes(
-        &data,
-        (char *)value,
-        strlen(value));
-
-    int rc = dpiStmt_bindValueByName(
-        stmt,
-        name,
-        strlen(name),
-        DPI_NATIVE_TYPE_BYTES,
-        &data);
-
-    if (rc < 0)
+    if (dpiConn_newVar(
+            stmt->conn,
+            DPI_ORACLE_TYPE_CLOB,
+            DPI_NATIVE_TYPE_LOB,
+            1,
+            0,
+            0,
+            0,
+            NULL,
+            &var,
+            &data) < 0)
+    {
         oracle_capture_last_error();
+        return -1;
+    }
 
-    return rc;
+    if (dpiStmt_bindByName(
+            stmt->stmt,
+            name,
+            strlen(name),
+            var) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    dpiLob *lob = data->value.asLOB;
+
+    if (!lob)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (dpiLob_writeBytes(
+            lob,
+            1,
+            value,
+            strlen(value)) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
 }
 
-int32_t oracle_bind_blob(dpiStmt *stmt, const char *name, const char *value)
+int32_t oracle_bind_blob(oracle_stmt *stmt, const char *name, const char *value)
 {
-    dpiData data;
-    memset(&data, 0, sizeof(data));
+    dpiVar *var = NULL;
+    dpiData *data = NULL;
 
-    dpiData_setBytes(
-        &data,
-        (char *)value,
-        strlen(value));
-
-    int rc = dpiStmt_bindValueByName(
-        stmt,
-        name,
-        strlen(name),
-        DPI_NATIVE_TYPE_BYTES,
-        &data);
-
-    if (rc < 0)
+    if (dpiConn_newVar(
+            stmt->conn,
+            DPI_ORACLE_TYPE_BLOB,
+            DPI_NATIVE_TYPE_LOB,
+            1,
+            0,
+            0,
+            0,
+            NULL,
+            &var,
+            &data) < 0)
+    {
         oracle_capture_last_error();
+        return -1;
+    }
 
-    return rc;
+    if (dpiStmt_bindByName(
+            stmt->stmt,
+            name,
+            strlen(name),
+            var) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    dpiLob *lob = data->value.asLOB;
+
+    if (!lob)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (dpiLob_writeBytes(
+            lob,
+            1,
+            value,
+            strlen(value)) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
 }
 
-dpiStmt *oracle_prepare_stmt(dpiConn *conn, const char *sql)
+oracle_stmt *oracle_prepare_stmt(dpiConn *conn, const char *sql)
 {
-    dpiStmt *stmt = NULL;
+    oracle_stmt *result = malloc(sizeof(oracle_stmt));
+
+    if (!result)
+        return NULL;
+
+    memset(result, 0, sizeof(oracle_stmt));
 
     if (dpiConn_prepareStmt(
             conn,
@@ -344,27 +471,38 @@ dpiStmt *oracle_prepare_stmt(dpiConn *conn, const char *sql)
             strlen(sql),
             NULL,
             0,
-            &stmt) < 0)
+            &result->stmt) < 0)
     {
         oracle_capture_last_error();
+        free(result);
         return NULL;
     }
 
-    return stmt;
+    result->conn = conn;
+
+    return result;
 }
 
-void oracle_release_stmt(dpiStmt *stmt)
+void oracle_release_stmt(oracle_stmt *stmt)
 {
-    if (stmt)
-        dpiStmt_release(stmt);
+    if (!stmt)
+        return;
+
+    oracle_release_vars(stmt);
+    oracle_release_lobs(stmt);
+
+    if (stmt->stmt)
+        dpiStmt_release(stmt->stmt);
+
+    free(stmt);
 }
 
-int32_t oracle_execute_stmt(dpiStmt *stmt)
+int32_t oracle_execute_stmt(oracle_stmt *stmt)
 {
     uint32_t cols;
 
     if (dpiStmt_execute(
-            stmt,
+            stmt->stmt,
             DPI_MODE_EXEC_DEFAULT,
             &cols) < 0)
     {
@@ -375,13 +513,13 @@ int32_t oracle_execute_stmt(dpiStmt *stmt)
     return 0;
 }
 
-int32_t oracle_fetch(dpiStmt *stmt)
+int32_t oracle_fetch(oracle_stmt *stmt)
 {
     int found;
     uint32_t row;
 
     if (dpiStmt_fetch(
-            stmt,
+            stmt->stmt,
             &found,
             &row) < 0)
     {
@@ -392,11 +530,14 @@ int32_t oracle_fetch(dpiStmt *stmt)
     return found ? 1 : 0;
 }
 
-int32_t oracle_column_count(dpiStmt *stmt)
+int32_t oracle_column_count(oracle_stmt *stmt)
 {
     uint32_t count;
 
-    if (dpiStmt_getNumQueryColumns(stmt, &count) < 0) {
+    if (dpiStmt_getNumQueryColumns(
+            stmt->stmt,
+            &count) < 0)
+    {
         oracle_capture_last_error();
         return -1;
     }
@@ -404,12 +545,12 @@ int32_t oracle_column_count(dpiStmt *stmt)
     return count;
 }
 
-char *oracle_column_name(dpiStmt *stmt, int32_t column)
+char *oracle_column_name(oracle_stmt *stmt, int32_t column)
 {
     dpiQueryInfo info;
 
     if (dpiStmt_getQueryInfo(
-            stmt,
+            stmt->stmt,
             column + 1,
             &info) < 0)
     {
@@ -419,21 +560,22 @@ char *oracle_column_name(dpiStmt *stmt, int32_t column)
 
     char *result = malloc(info.nameLength + 1);
 
-    if (!result)
-        return NULL;
-
-    memcpy(result, info.name, info.nameLength);
+    memcpy(
+        result,
+        info.name,
+        info.nameLength
+    );
     result[info.nameLength] = '\0';
 
     return result;
 }
 
-int32_t oracle_column_type(dpiStmt *stmt, int32_t column)
+int32_t oracle_column_type(oracle_stmt *stmt, int32_t column)
 {
     dpiQueryInfo info;
 
     if (dpiStmt_getQueryInfo(
-            stmt,
+            stmt->stmt,
             column + 1,
             &info) < 0)
     {
@@ -444,13 +586,13 @@ int32_t oracle_column_type(dpiStmt *stmt, int32_t column)
     return info.typeInfo.oracleTypeNum;
 }
 
-void *oracle_column_value(dpiStmt *stmt, int32_t column)
+void *oracle_column_value(oracle_stmt *stmt, int32_t column)
 {
     dpiNativeTypeNum type;
     dpiData *data;
 
     if (dpiStmt_getQueryValue(
-            stmt,
+            stmt->stmt,
             column + 1,
             &type,
             &data) < 0)
