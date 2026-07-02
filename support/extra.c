@@ -218,102 +218,229 @@ void oracle_string_free(char *str)
 
 int32_t oracle_bind_null(oracle_stmt *stmt, const char *name)
 {
-    dpiData data;
-    memset(&data, 0, sizeof(data));
+    dpiVar *var = NULL;
+    dpiData *data = NULL;
 
-    data.isNull = 1;
-
-    int rc = dpiStmt_bindValueByName(
-        stmt->stmt,
-        name,
-        strlen(name),
-        DPI_NATIVE_TYPE_BYTES,
-        &data);
-
-    if (rc < 0)
+    if (dpiConn_newVar(
+            stmt->conn,
+            DPI_ORACLE_TYPE_VARCHAR,
+            DPI_NATIVE_TYPE_BYTES,
+            1,
+            1,
+            1,
+            0,
+            NULL,
+            &var,
+            &data) < 0)
+    {
         oracle_capture_last_error();
+        return -1;
+    }
 
-    return rc;
+    data->isNull = 1;
+
+    if (dpiStmt_bindByName(
+            stmt->stmt,
+            name,
+            strlen(name),
+            var) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
 }
 
 int32_t oracle_bind_bool(oracle_stmt *stmt, const char *name, int value)
 {
-    dpiData data;
-    memset(&data, 0, sizeof(data));
+    dpiVar *var = NULL;
+    dpiData *data = NULL;
 
-    dpiData_setBool(&data, value != 0);
-
-    int rc = dpiStmt_bindValueByName(
-        stmt->stmt,
-        name,
-        strlen(name),
-        DPI_NATIVE_TYPE_BOOLEAN,
-        &data);
-
-    if (rc < 0)
+    if (dpiConn_newVar(
+            stmt->conn,
+            DPI_ORACLE_TYPE_BOOLEAN,
+            DPI_NATIVE_TYPE_BOOLEAN,
+            1,
+            0,
+            0,
+            0,
+            NULL,
+            &var,
+            &data) < 0)
+    {
         oracle_capture_last_error();
+        return -1;
+    }
 
-    return rc;
+    dpiData_setBool(data, value != 0);
+
+    if (dpiStmt_bindByName(
+            stmt->stmt,
+            name,
+            strlen(name),
+            var) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
 }
 
 int32_t oracle_bind_string(oracle_stmt *stmt, const char *name, const char *value)
 {
-    dpiData data;
-    memset(&data, 0, sizeof(data));
+    dpiVar *var = NULL;
+    dpiData *data = NULL;
 
-    dpiData_setBytes(&data, (char *) value, strlen(value));
+    uint32_t len = (uint32_t) strlen(value);
 
-    int rc = dpiStmt_bindValueByName(
-        stmt->stmt,
-        name,
-        strlen(name),
-        DPI_NATIVE_TYPE_BYTES,
-        &data);
-
-    if (rc < 0)
+    if (dpiConn_newVar(
+            stmt->conn,
+            DPI_ORACLE_TYPE_VARCHAR,
+            DPI_NATIVE_TYPE_BYTES,
+            1,
+            len,
+            1,
+            0,
+            NULL,
+            &var,
+            &data) < 0)
+    {
         oracle_capture_last_error();
+        return -1;
+    }
 
-    return rc;
+    dpiData_setBytes(data, (char *) value, len);
+
+    if (dpiStmt_bindByName(
+            stmt->stmt,
+            name,
+            strlen(name),
+            var) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
 }
 
 int32_t oracle_bind_int64(oracle_stmt *stmt, const char *name, int64_t value)
 {
-    dpiData data;
-    memset(&data, 0, sizeof(data));
+    dpiVar *var = NULL;
+    dpiData *data = NULL;
 
-    dpiData_setInt64(&data, value);
-
-    int rc = dpiStmt_bindValueByName(
-        stmt->stmt,
-        name,
-        strlen(name),
-        DPI_NATIVE_TYPE_INT64,
-        &data);
-
-    if (rc < 0)
+    if (dpiConn_newVar(
+            stmt->conn,
+            DPI_ORACLE_TYPE_NUMBER,
+            DPI_NATIVE_TYPE_INT64,
+            1,
+            0,
+            0,
+            0,
+            NULL,
+            &var,
+            &data) < 0)
+    {
         oracle_capture_last_error();
+        return -1;
+    }
 
-    return rc;
+    dpiData_setInt64(data, value);
+
+    if (dpiStmt_bindByName(
+            stmt->stmt,
+            name,
+            strlen(name),
+            var) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
 }
 
 int32_t oracle_bind_double(oracle_stmt *stmt, const char *name, double value)
 {
-    dpiData data;
-    memset(&data, 0, sizeof(data));
+    dpiVar *var = NULL;
+    dpiData *data = NULL;
 
-    dpiData_setDouble(&data, value);
-
-    int rc = dpiStmt_bindValueByName(
-        stmt->stmt,
-        name,
-        strlen(name),
-        DPI_NATIVE_TYPE_DOUBLE,
-        &data);
-
-    if (rc < 0)
+    if (dpiConn_newVar(
+            stmt->conn,
+            DPI_ORACLE_TYPE_NUMBER,
+            DPI_NATIVE_TYPE_DOUBLE,
+            1,
+            0,
+            0,
+            0,
+            NULL,
+            &var,
+            &data) < 0)
+    {
         oracle_capture_last_error();
+        return -1;
+    }
 
-    return rc;
+    dpiData_setDouble(data, value);
+
+    if (dpiStmt_bindByName(
+            stmt->stmt,
+            name,
+            strlen(name),
+            var) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(var);
+        return -1;
+    }
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
 }
 
 int32_t oracle_bind_clob(oracle_stmt *stmt, const char *name, const char *value)
