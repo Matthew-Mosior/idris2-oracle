@@ -941,6 +941,250 @@ int32_t oracle_interval_ym_months(void *ptr)
     return ((dpiIntervalYM *) ptr)->months;
 }
 
+static int oracle_new_bound_var(oracle_stmt *stmt, const char *name, dpiOracleTypeNum oracleType, dpiNativeTypeNum nativeType, dpiVar **var, dpiData **data)
+{
+    if (dpiConn_newVar(
+            stmt->conn,
+            oracleType,
+            nativeType,
+            1,
+            0,
+            0,
+            0,
+            NULL,
+            var,
+            data) < 0)
+    {
+        oracle_capture_last_error();
+        return -1;
+    }
+
+    if (dpiStmt_bindByName(
+            stmt->stmt,
+            name,
+            strlen(name),
+            *var) < 0)
+    {
+        oracle_capture_last_error();
+        dpiVar_release(*var);
+        *var = NULL;
+        return -1;
+    }
+
+    return 0;
+}
+
+int32_t oracle_bind_date(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second)
+{
+    dpiVar *var;
+    dpiData *data;
+
+    if (oracle_new_bound_var(
+            stmt,
+            name,
+            DPI_ORACLE_TYPE_DATE,
+            DPI_NATIVE_TYPE_TIMESTAMP,
+            &var,
+            &data) < 0)
+        return -1;
+
+    dpiData_setTimestamp(
+            data,
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            0,
+            0,
+            0);
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
+}
+
+int32_t oracle_bind_timestamp(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t nanoseconds)
+{
+    dpiVar *var;
+    dpiData *data;
+
+    if (oracle_new_bound_var(
+            stmt,
+            name,
+            DPI_ORACLE_TYPE_TIMESTAMP,
+            DPI_NATIVE_TYPE_TIMESTAMP,
+            &var,
+            &data) < 0)
+        return -1;
+
+    dpiData_setTimestamp(
+            data,
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            nanoseconds,
+            0,
+            0);
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
+}
+
+int32_t oracle_bind_timestamp_tz(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t nanoseconds, int8_t tzHour, int8_t tzMinute)
+{
+    dpiVar *var;
+    dpiData *data;
+
+    if (oracle_new_bound_var(
+            stmt,
+            name,
+            DPI_ORACLE_TYPE_TIMESTAMP_TZ,
+            DPI_NATIVE_TYPE_TIMESTAMP,
+            &var,
+            &data) < 0)
+        return -1;
+
+    dpiData_setTimestamp(
+            data,
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            nanoseconds,
+            tzHour,
+            tzMinute);
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
+}
+
+int32_t oracle_bind_timestamp_ltz(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t nanoseconds)
+{
+    dpiVar *var;
+    dpiData *data;
+
+    if (oracle_new_bound_var(
+            stmt,
+            name,
+            DPI_ORACLE_TYPE_TIMESTAMP_LTZ,
+            DPI_NATIVE_TYPE_TIMESTAMP,
+            &var,
+            &data) < 0)
+        return -1;
+
+    dpiData_setTimestamp(
+            data,
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            nanoseconds,
+            0,
+            0);
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
+}
+
+int32_t oracle_bind_interval_ym(oracle_stmt *stmt, const char *name, int32_t years, int32_t months)
+{
+    dpiVar *var;
+    dpiData *data;
+
+    if (oracle_new_bound_var(
+            stmt,
+            name,
+            DPI_ORACLE_TYPE_INTERVAL_YM,
+            DPI_NATIVE_TYPE_INTERVAL_YM,
+            &var,
+            &data) < 0)
+        return -1;
+
+    dpiData_setIntervalYM(
+            data,
+            years,
+            months);
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
+}
+
+int32_t oracle_bind_interval_ds(oracle_stmt *stmt, const char *name, int32_t days, int32_t hours, int32_t minutes, int32_t seconds, int32_t nanoseconds)
+{
+    dpiVar *var;
+    dpiData *data;
+
+    if (oracle_new_bound_var(
+            stmt,
+            name,
+            DPI_ORACLE_TYPE_INTERVAL_DS,
+            DPI_NATIVE_TYPE_INTERVAL_DS,
+            &var,
+            &data) < 0)
+        return -1;
+
+    dpiData_setIntervalDS(
+            data,
+            days,
+            hours,
+            minutes,
+            seconds,
+            nanoseconds);
+
+    if (stmt->var_count >= 64)
+    {
+        dpiVar_release(var);
+        return -1;
+    }
+
+    stmt->vars[stmt->var_count++] = var;
+
+    return 0;
+}
+
 void* oracle_connect(const char* username, const char* password, const char* connect_string)
 {
     if (oracle_init_context() != 0)

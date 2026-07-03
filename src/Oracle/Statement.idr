@@ -6,10 +6,12 @@ import Data.ByteString
 import Oracle.Connection
 import Oracle.Error
 import Oracle.FFI.Bind
+import Oracle.FFI.DateTime
 import Oracle.FFI.Statement
 import Oracle.Internal.Decode
 import Oracle.Internal.Pointer
 import Oracle.Types.BindParameter
+import Oracle.Types.DateTime
 import Oracle.Types.Error
 import Oracle.Types.Value
 
@@ -119,6 +121,12 @@ execute stmt = do
 ||| - OracleBool
 ||| - OracleClob
 ||| - OracleBlob
+||| - OracleDate
+||| - OracleTimestamp
+||| - OracleTimestampTZ
+||| - OracleTimestampLTZ
+||| - OracleIntervalYM
+||| - OracleIntervalDS
 |||
 ||| OracleBytes bindings are not supported as of yet.
 |||
@@ -126,58 +134,98 @@ export
 bindOne : Statement -> BindParameter -> IO (Either OracleError ())
 bindOne stmt param =
   case param.value of
-    OracleNull     => do
-      rc <- primIO (prim__bindNull stmt.ptr param.name)
+    OracleNull            =>
+      primIO (prim__bindNull stmt.ptr param.name)
+        >>= finish
+    OracleString s        =>
+      primIO (prim__bindString stmt.ptr param.name s)
+        >>= finish
+    OracleInt i           =>
+      primIO (prim__bindInt64 stmt.ptr param.name i)
+        >>= finish
+    OracleDouble d        =>
+      primIO (prim__bindDouble stmt.ptr param.name d)
+        >>= finish
+    OracleBool b          =>
+      primIO (prim__bindBool stmt.ptr param.name (if b then 1 else 0))
+        >>= finish
+    OracleClob s          =>
+      primIO (prim__bindClob stmt.ptr param.name s)
+        >>= finish
+    OracleBlob b          =>
+      primIO (prim__bindBlob stmt.ptr param.name (toString b))
+        >>= finish
+    OracleDate d          =>
+      primIO ( prim__bindDate stmt.ptr
+                              param.name
+                              (cast d.year)
+                              (cast d.month)
+                              (cast d.day)
+                              (cast d.hour)
+                              (cast d.minute)
+                              (cast d.second)
+             )
+        >>= finish
+    OracleTimestamp ts    =>
+      primIO ( prim__bindTimestamp stmt.ptr
+                                   param.name
+                                   (cast ts.year)
+                                   (cast ts.month)
+                                   (cast ts.day)
+                                   (cast ts.hour)
+                                   (cast ts.minute)
+                                   (cast ts.second)
+                                   (cast ts.nanosecond)
+             )
+        >>= finish
+    OracleTimestampTZ ts  =>
+      primIO ( prim__bindTimestampTZ stmt.ptr
+                                     param.name
+                                     (cast ts.year)
+                                     (cast ts.month)
+                                     (cast ts.day)
+                                     (cast ts.hour)
+                                     (cast ts.minute)
+                                     (cast ts.second)
+                                     (cast ts.nanosecond)
+                                     (cast ts.tzHourOffset)
+                                     (cast ts.tzMinuteOffset)
+             )
+        >>= finish
+    OracleTimestampLTZ ts =>
+      primIO ( prim__bindTimestampLTZ stmt.ptr
+                                      param.name
+                                      (cast ts.year)
+                                      (cast ts.month)
+                                      (cast ts.day)
+                                      (cast ts.hour)
+                                      (cast ts.minute)
+                                      (cast ts.second)
+                                      (cast ts.nanosecond)
+             )
+        >>= finish
+    OracleIntervalYM iv   =>
+      primIO ( prim__bindIntervalYM stmt.ptr
+                                    param.name
+                                    (cast iv.years)
+                                    (cast iv.months)
+             )
+        >>= finish
+    OracleIntervalDS iv   =>
+      primIO ( prim__bindIntervalDS stmt.ptr
+                                    param.name
+                                    (cast iv.days)
+                                    (cast iv.hours)
+                                    (cast iv.minutes)
+                                    (cast iv.seconds)
+                                    (cast iv.nanoseconds)
+             )
+        >>= finish
+  where
+    finish : Int32 -> IO (Either OracleError ())
+    finish rc =
       case rc == 0 of
-        True  =>
-          pure (Right ())
-        False => do
-          lasterr <- getLastError
-          pure (Left lasterr)
-    OracleString s => do
-      rc <- primIO (prim__bindString stmt.ptr param.name s)
-      case rc == 0 of
-        True  =>
-          pure (Right ())
-        False => do
-          lasterr <- getLastError
-          pure (Left lasterr)
-    OracleInt i    => do
-      rc <- primIO (prim__bindInt64 stmt.ptr param.name i)
-      case rc == 0 of
-        True  =>
-          pure (Right ())
-        False => do
-          lasterr <- getLastError
-          pure (Left lasterr)
-    OracleDouble d => do
-      rc <- primIO (prim__bindDouble stmt.ptr param.name d)
-      case rc == 0 of
-        True  =>
-          pure (Right ())
-        False => do
-          lasterr <- getLastError
-          pure (Left lasterr)
-    OracleBool b   => do
-      rc <- primIO (prim__bindBool stmt.ptr param.name (if b then 1 else 0))
-      case rc == 0 of
-        True  =>
-          pure (Right ())
-        False => do
-          lasterr <- getLastError
-          pure (Left lasterr)
-    OracleClob s   => do
-      rc <- primIO (prim__bindClob stmt.ptr param.name s)
-      case rc == 0 of
-        True  =>
-          pure (Right ())
-        False => do
-          lasterr <- getLastError
-          pure (Left lasterr)
-    OracleBlob b   => do
-      rc <- primIO (prim__bindBlob stmt.ptr param.name (toString b))
-      case rc == 0 of
-        True  =>
+        True =>
           pure (Right ())
         False => do
           lasterr <- getLastError
