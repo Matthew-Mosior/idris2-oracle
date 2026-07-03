@@ -3,10 +3,12 @@ module Oracle.Internal.Decode
 import Data.ByteString
 import Oracle.Error
 import Oracle.FFI.Data
+import Oracle.FFI.DateTime
 import Oracle.FFI.Lob
 import Oracle.FFI.QueryInfo
 import Oracle.FFI.Statement
 import Oracle.Internal.QueryInfo
+import Oracle.Types.DateTime
 import Oracle.Types.OracleType
 import Oracle.Types.Value
 import Oracle.Types.Error
@@ -53,12 +55,78 @@ decodeColumn stmt column = do
                 OracleTypeRaw       =>
                   Right . OracleBlob . fromString <$>
                     primIO (prim__dataString dataptr)
-                OracleTypeDate      =>
-                  Right . OracleString <$>
-                    primIO (prim__dataString dataptr)
-                OracleTypeTimestamp =>
-                  Right . OracleString <$>
-                    primIO (prim__dataString dataptr)
+                OracleTypeDate      => do
+                  ts <- primIO (prim__dataTimestamp dataptr)
+                  pure $
+                    Right $
+                      OracleDate $
+                        MkOracleDate
+                          !(primIO (prim__timestampYear ts))
+                          !(primIO (prim__timestampMonth ts))
+                          !(primIO (prim__timestampDay ts))
+                          !(primIO (prim__timestampHour ts))
+                          !(primIO (prim__timestampMinute ts))
+                          !(primIO (prim__timestampSecond ts))
+                OracleTypeTimestamp => do
+                  ts <- primIO (prim__dataTimestamp dataptr)
+                  pure $
+                    Right $
+                      OracleTimestamp $
+                        MkOracleTimestamp
+                          !(primIO (prim__timestampYear ts))
+                          !(primIO (prim__timestampMonth ts))
+                          !(primIO (prim__timestampDay ts))
+                          !(primIO (prim__timestampHour ts))
+                          !(primIO (prim__timestampMinute ts))
+                          !(primIO (prim__timestampSecond ts))
+                          !(primIO (prim__timestampNanosecond ts))
+                OracleTypeTimestampTZ => do
+                  ts <- primIO (prim__dataTimestamp dataptr)
+                  pure $
+                    Right $
+                      OracleTimestampTZ $
+                        MkOracleTimestampTZ
+                          !(primIO (prim__timestampYear ts))
+                          !(primIO (prim__timestampMonth ts))
+                          !(primIO (prim__timestampDay ts))
+                          !(primIO (prim__timestampHour ts))
+                          !(primIO (prim__timestampMinute ts))
+                          !(primIO (prim__timestampSecond ts))
+                          !(primIO (prim__timestampNanosecond ts))
+                          !(primIO (prim__timestampTZHour ts))
+                          !(primIO (prim__timestampTZMinute ts))
+                OracleTypeTimestampLTZ => do
+                  ts <- primIO (prim__dataTimestamp dataptr)
+                  pure $
+                    Right $
+                      OracleTimestampLTZ $
+                        MkOracleTimestamp
+                          !(primIO (prim__timestampYear ts))
+                          !(primIO (prim__timestampMonth ts))
+                          !(primIO (prim__timestampDay ts))
+                          !(primIO (prim__timestampHour ts))
+                          !(primIO (prim__timestampMinute ts))
+                          !(primIO (prim__timestampSecond ts))
+                          !(primIO (prim__timestampNanosecond ts))
+                OracleTypeIntervalYM => do
+                  iv <- primIO (prim__dataIntervalYM dataptr)
+                  pure $
+                    Right $
+                      OracleIntervalYM $
+                        MkOracleIntervalYM
+                          !(primIO (prim__intervalYMYears iv))
+                          !(primIO (prim__intervalYMMonths iv))
+                OracleTypeIntervalDS => do
+                  iv <- primIO (prim__dataIntervalDS dataptr)
+                  pure $
+                    Right $
+                      OracleIntervalDS $
+                        MkOracleIntervalDS
+                          !(primIO (prim__intervalDSDays iv))
+                          !(primIO (prim__intervalDSHours iv))
+                          !(primIO (prim__intervalDSMinutes iv))
+                          !(primIO (prim__intervalDSSeconds iv))
+                          !(primIO (prim__intervalDSNanoseconds iv))
                 OracleTypeBlob      => do
                   lob <- primIO (prim__dataLob dataptr)
                   case prim__nullAnyPtr lob == 1 of

@@ -20,6 +20,7 @@ modules    = Oracle
            , Oracle.FFI.Connection
            , Oracle.FFI.Context
            , Oracle.FFI.Data
+           , Oracle.FFI.DateTime
            , Oracle.FFI.Error
            , Oracle.FFI.Lob
            , Oracle.FFI.QueryInfo
