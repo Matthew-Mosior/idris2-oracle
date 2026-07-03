@@ -50,13 +50,19 @@ installSchema conn =
     conn
     """
     CREATE TABLE people (
-        id          NUMBER PRIMARY KEY,
-        name        VARCHAR2(100) NOT NULL,
-        age         NUMBER,
-        salary      NUMBER,
-        active      NUMBER(1) DEFAULT 1,
-        created_at  TIMESTAMP,
-        notes       CLOB
+    id                  NUMBER PRIMARY KEY,
+    name                VARCHAR2(100) NOT NULL,
+    age                 NUMBER,
+    salary              NUMBER,
+    active              NUMBER(1) DEFAULT 1,
+    created_at          TIMESTAMP,
+    notes               CLOB,
+    birth_date          DATE,
+    hire_timestamp      TIMESTAMP,
+    meeting_time_tz     TIMESTAMP WITH TIME ZONE,
+    login_time_ltz      TIMESTAMP WITH LOCAL TIME ZONE,
+    vacation_length     INTERVAL YEAR(4) TO MONTH,
+    uptime              INTERVAL DAY(9) TO SECOND(9)
     )
     """
     []
@@ -124,7 +130,13 @@ seedPeople conn =
         salary,
         active,
         created_at,
-        notes
+        notes,
+        birth_date,
+        hire_timestamp,
+        meeting_time_tz,
+        login_time_ltz,
+        vacation_length,
+        uptime
     )
     VALUES
     (
@@ -134,7 +146,13 @@ seedPeople conn =
         :salary,
         :active,
         CURRENT_TIMESTAMP,
-        :notes
+        :notes,
+        :birth_date,
+        :hire_timestamp,
+        :meeting_time_tz,
+        :login_time_ltz,
+        :vacation_length,
+        :uptime
     )
     """
     [ MkBindParameter ":name"   (OracleString "Alice")
@@ -142,6 +160,44 @@ seedPeople conn =
     , MkBindParameter ":salary" (OracleInt 90000)
     , MkBindParameter ":active" (OracleBool True)
     , MkBindParameter ":notes"  (OracleClob "Alice Notes")
+    , MkBindParameter ":birth_date" ( OracleDate $
+                                        MkOracleDate
+                                          1994 3 18
+                                          14 30 45
+                                    )
+    , MkBindParameter ":hire_timestamp" ( OracleTimestamp $
+                                            MkOracleTimestamp
+                                              2022 5 10
+                                              9 15 30
+                                              123456789
+                                        )
+    , MkBindParameter ":meeting_time_tz" ( OracleTimestampTZ $
+                                             MkOracleTimestampTZ
+                                               2025 7 1
+                                               10 45 30
+                                               987654321
+                                               (-5)
+                                               0
+                                         )
+    , MkBindParameter ":login_time_ltz" ( OracleTimestampLTZ $
+                                            MkOracleTimestamp
+                                              2025 7 1
+                                              8 0 0
+                                              111222333
+                                        )
+    , MkBindParameter ":vacation_length" ( OracleIntervalYM $
+                                             MkOracleIntervalYM
+                                               2
+                                               6
+                                         )
+    , MkBindParameter ":uptime" ( OracleIntervalDS $
+                                    MkOracleIntervalDS
+                                      12
+                                      8
+                                      15
+                                      42
+                                      555000000
+                                )
     ]
   >>== \_ =>
   execute_
@@ -155,7 +211,13 @@ seedPeople conn =
         salary,
         active,
         created_at,
-        notes
+        notes,
+        birth_date,
+        hire_timestamp,
+        meeting_time_tz,
+        login_time_ltz,
+        vacation_length,
+        uptime
     )
     VALUES
     (
@@ -165,7 +227,13 @@ seedPeople conn =
         :salary,
         :active,
         CURRENT_TIMESTAMP,
-        :notes
+        :notes,
+        :birth_date,
+        :hire_timestamp,
+        :meeting_time_tz,
+        :login_time_ltz,
+        :vacation_length,
+        :uptime
     )
     """
     [ MkBindParameter ":name"   (OracleString "Bob")
@@ -173,6 +241,44 @@ seedPeople conn =
     , MkBindParameter ":salary" (OracleInt 120000)
     , MkBindParameter ":active" (OracleBool False)
     , MkBindParameter ":notes"  (OracleClob "Bob Notes")
+    , MkBindParameter ":birth_date" ( OracleDate $
+                                        MkOracleDate
+                                          1982 11 2
+                                          6 0 0
+                                    )
+    , MkBindParameter ":hire_timestamp" ( OracleTimestamp $
+                                            MkOracleTimestamp
+                                              2015 1 8
+                                              16 45 1
+                                              42
+                                        )
+    , MkBindParameter ":meeting_time_tz" ( OracleTimestampTZ $
+                                             MkOracleTimestampTZ
+                                               2024 12 31
+                                               23 59 59
+                                               999999999
+                                               1
+                                               30
+                                         )
+    , MkBindParameter ":login_time_ltz" ( OracleTimestampLTZ $
+                                            MkOracleTimestamp
+                                              2024 12 31
+                                              22 30 0
+                                              0
+                                        )
+    , MkBindParameter ":vacation_length" ( OracleIntervalYM $
+                                             MkOracleIntervalYM
+                                               15
+                                               3
+                                         )
+    , MkBindParameter ":uptime" ( OracleIntervalDS $
+                                    MkOracleIntervalDS
+                                      365
+                                      23
+                                      59
+                                      59
+                                      999999999
+                                )
     ]
 
 ||| Populate the BLOBS table with the standard integration test fixture.
