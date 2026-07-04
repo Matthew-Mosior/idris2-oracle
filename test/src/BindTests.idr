@@ -64,6 +64,26 @@ test_BindString cfg = do
     Right () =>
       pure (Right ())
 
+||| Verify that Oracle treats an empty VARCHAR2 as NULL.
+|||
+||| Since NAME is NOT NULL this should fail with ORA-01400.
+|||
+export
+test_BindEmptyString : ConnectInfo -> IO (Either OracleError ())
+test_BindEmptyString cfg = do
+  result <-
+    runBind cfg
+      """
+      INSERT INTO people(id,name)
+      VALUES(people_seq.NEXTVAL,:name)
+      """
+      [ MkBindParameter ":name" (OracleString "") ]
+  case result of
+    Left _   =>
+      pure (Right ())
+    Right () =>
+      die "Expected Oracle to treat empty string as NULL."
+
 ||| Verify NUMBER integer binding.
 |||
 export

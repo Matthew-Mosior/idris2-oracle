@@ -27,6 +27,7 @@ main = do
       test_ConcurrentStatements connectinfo >>== \_ =>
       test_BindNull connectinfo >>== \_ =>
       test_BindString connectinfo >>== \_ =>
+      test_BindEmptyString connectinfo >>== \_ =>
       test_BindInt connectinfo >>== \_ =>
       test_BindDouble connectinfo >>== \_ =>
       test_BindBoolTrue connectinfo >>== \_ =>

@@ -9,6 +9,7 @@ depends    = base
            , bytestring
            , elab-util
            , elin
+           , ref1
 modules    = Oracle
            , Oracle.Connection
            , Oracle.Context

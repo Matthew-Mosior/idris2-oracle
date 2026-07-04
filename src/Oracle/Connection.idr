@@ -2,6 +2,7 @@ module Oracle.Connection
 
 import Control.Monad.Elin
 import Control.Monad.MCancel
+import Data.Linear.Ref1
 import Oracle.Error
 import Oracle.FFI.Connection
 import Oracle.Internal.Pointer
@@ -58,37 +59,37 @@ disconnect conn =
 export
 withConnection : ConnectInfo -> (Connection -> IO (Either OracleError a)) -> IO (Either OracleError a)
 withConnection cfg action = do
-  connresult <- connect cfg
-  case connresult of
-    Left err   =>
-      pure (Left err)
-    Right conn => do
-      result <- runElinIO (withConnection' conn)
-      case result of
-        Right value =>
-          pure (Right value)
-        Left err =>
-          assert_total $ idris_crash "Oracle.Connection.withConnection: \{show err}"
+  result <- runElinIO (withConnection' cfg)
+  case result of
+    Right value =>
+      case value of
+        Left err     =>
+          pure (Left err)
+        Right value' =>
+          pure (Right value')
+    Left err    =>
+      assert_total $ idris_crash "Oracle.Connection.withConnection: \{show err}"
   where
-    acquire : Connection -> Elin World [] Connection
-    acquire conn =
-      liftIO (pure conn)
-    release : Connection -> Elin World [] ()
-    release conn =
-      liftIO (disconnect conn)
-    use : Connection -> Elin World [] a
-    use conn = do
-      result <- liftIO (action conn)
-      case result of
+    acquire : ConnectInfo -> F1 World (Either OracleError Connection)
+    acquire cfg = do
+      ioToF1 (connect cfg)
+    use : Either OracleError Connection -> F1 World (Either OracleError a)
+    use conn =
+      case conn of
         Left err    =>
-          liftIO $
-            pure $
-              assert_total $ idris_crash "Oracle.Connection.withConnection: action returned \{show err}"
-        Right value =>
-          pure value
-    withConnection' : Connection -> Elin World [] a
-    withConnection' conn =
+          ioToF1 (pure (Left err))
+        Right conn' => 
+          ioToF1 (action conn')
+    release : Either OracleError Connection -> F1' World
+    release conn =
+      case conn of
+        Left err    =>
+          ioToF1 (pure ())
+        Right conn' =>
+          ioToF1 (disconnect conn')
+    withConnection' : ConnectInfo -> Elin World [] (Either OracleError a)
+    withConnection' cfg =
       bracket
-        (acquire conn)
-        use
-        release
+        (runIO (acquire cfg))
+        (\conn => runIO (use conn))
+        (\conn => runIO (release conn))
