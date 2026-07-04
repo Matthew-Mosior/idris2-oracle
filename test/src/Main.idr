@@ -19,29 +19,30 @@ main = do
       test_SequentialConnections connectinfo >>== \_ =>
       test_InvalidPassword connectinfo >>== \_ =>
       test_InvalidService connectinfo >>== \_ =>
-      test_Prepare connectinfo >>== \_ =>
-      test_Release connectinfo >>== \_ =>
-      test_WithStatement connectinfo >>== \_ =>
-      test_ReuseStatement connectinfo >>== \_ =>
-      test_SequentialStatements connectinfo >>== \_ =>
-      test_ConcurrentStatements connectinfo >>== \_ =>
-      test_BindNull connectinfo >>== \_ =>
-      test_BindString connectinfo >>== \_ =>
-      test_BindEmptyString connectinfo >>== \_ =>
-      test_BindInt connectinfo >>== \_ =>
-      test_BindDouble connectinfo >>== \_ =>
-      test_BindBoolTrue connectinfo >>== \_ =>
-      test_BindBoolFalse connectinfo >>== \_ =>
-      test_BindClob connectinfo >>== \_ =>
-      test_BindBlob connectinfo >>== \_ =>
-      test_BindDate connectinfo >>== \_ =>
-      test_BindTimestamp connectinfo >>== \_ =>
-      test_BindTimestampTZ connectinfo >>== \_ =>
-      test_BindTimestampLTZ connectinfo >>== \_ =>
-      test_BindIntervalYM connectinfo >>== \_ =>
-      test_BindIntervalDS connectinfo >>== \_ =>
-      test_BindManyParameters connectinfo >>== \_ =>
-      test_RebindParameter connectinfo
+      test_Prepare conn >>== \_ =>
+      test_Release conn >>== \_ =>
+      test_WithStatement conn >>== \_ =>
+      test_Execute conn >>== \_ =>
+      test_ReuseStatement conn >>== \_ =>
+      test_SequentialStatements conn >>== \_ =>
+      test_ConcurrentStatements conn >>== \_ =>
+      test_BindNull conn >>== \_ =>
+      test_BindString conn >>== \_ =>
+      test_BindEmptyString conn >>== \_ =>
+      test_BindInt conn >>== \_ =>
+      test_BindDouble conn >>== \_ =>
+      test_BindBoolTrue conn >>== \_ =>
+      test_BindBoolFalse conn >>== \_ =>
+      test_BindClob conn >>== \_ =>
+      test_BindBlob conn >>== \_ =>
+      test_BindDate conn >>== \_ =>
+      test_BindTimestamp conn >>== \_ =>
+      test_BindTimestampTZ conn >>== \_ =>
+      test_BindTimestampLTZ conn >>== \_ =>
+      test_BindIntervalYM conn >>== \_ =>
+      test_BindIntervalDS conn >>== \_ =>
+      test_BindManyParameters conn >>== \_ =>
+      test_RebindParameter conn
   case result of
     Left err =>
       die (show err)

@@ -3,6 +3,7 @@ module Oracle.Statement
 import Control.Monad.Elin
 import Control.Monad.MCancel
 import Data.ByteString
+import Data.Linear.Ref1
 import Oracle.Connection
 import Oracle.Error
 import Oracle.FFI.Bind
@@ -60,32 +61,39 @@ release stmt =
 export
 withStatement : Connection -> String -> (Statement -> IO (Either OracleError a)) -> IO (Either OracleError a)
 withStatement conn sql action = do
-  estmt <- prepare conn sql
-  case estmt of
-    Left err =>
-      pure (Left err)
-    Right stmt => do
-      res <- runElinIO (withStatement' stmt)
-      case res of
-        Left err =>
-          assert_total $ idris_crash "Oracle.Statement.withStatement: \{show err}"
-        Right result =>
-          pure result
+  result <- runElinIO (withStatement' conn sql)
+  case result of
+    Right value =>
+      case value of
+        Left err     =>
+          pure (Left err)
+        Right value' =>
+          pure (Right value')
+    Left err    =>
+      assert_total $ idris_crash "Oracle.Connection.withStatement: \{show err}"
   where
-    acquire : Statement -> Elin World [] Statement
-    acquire stmt =
-      liftIO $ pure stmt
-    cleanup : Statement -> Elin World [] ()
-    cleanup stmt =
-      liftIO $ release stmt
-    use : Statement -> Elin World [] (Either OracleError a)
+    acquire : Connection -> String -> F1 World (Either OracleError Statement)
+    acquire conn sql =
+      ioToF1 (prepare conn sql)
+    use : Either OracleError Statement -> F1 World (Either OracleError a)
     use stmt =
-      liftIO $ action stmt
-    withStatement' : Statement -> Elin World [] (Either OracleError a)
-    withStatement' stmt =
-      bracket (acquire stmt)
-              use
-              cleanup
+      case stmt of
+        Left err    =>
+          ioToF1 (pure (Left err))
+        Right stmt' =>
+          ioToF1 (action stmt')
+    cleanup : Either OracleError Statement -> F1' World
+    cleanup stmt =
+      case stmt of
+        Left err    =>
+          ioToF1 (pure ())
+        Right stmt' =>
+          ioToF1 (release stmt')
+    withStatement' : Connection -> String -> Elin World [] (Either OracleError a)
+    withStatement' conn sql =
+      bracket (runIO (acquire conn sql))
+              (\stmt => runIO (use stmt))
+              (\stmt => runIO (cleanup stmt))
 
 --------------------------------------------------------------------------------
 --          Execute

@@ -7,20 +7,19 @@ import Oracle.Types.DateTime
 import System
 
 private
-runBind : ConnectInfo -> String -> List BindParameter -> IO (Either OracleError ())
-runBind cfg sql params =
-  withConnection cfg $ \conn =>
-    withStatement conn sql $ \stmt => do
-      bind stmt params >>==
-      \_ => execute stmt
+runBind : Connection -> String -> List BindParameter -> IO (Either OracleError ())
+runBind conn sql params =
+  withStatement conn sql $ \stmt => do
+    bind stmt params >>==
+    \_ => execute stmt
 
 ||| Verify that NULL values can be bound successfully.
 |||
 export
-test_BindNull : ConnectInfo -> IO (Either OracleError ())
-test_BindNull cfg = do
+test_BindNull : Connection -> IO (Either OracleError ())
+test_BindNull conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people
       (
@@ -49,10 +48,10 @@ test_BindNull cfg = do
 ||| Verify VARCHAR2 binding.
 |||
 export
-test_BindString : ConnectInfo -> IO (Either OracleError ())
-test_BindString cfg = do
+test_BindString : Connection -> IO (Either OracleError ())
+test_BindString conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name)
       VALUES(people_seq.NEXTVAL,:name)
@@ -69,10 +68,10 @@ test_BindString cfg = do
 ||| Since NAME is NOT NULL this should fail with ORA-01400.
 |||
 export
-test_BindEmptyString : ConnectInfo -> IO (Either OracleError ())
-test_BindEmptyString cfg = do
+test_BindEmptyString : Connection -> IO (Either OracleError ())
+test_BindEmptyString conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name)
       VALUES(people_seq.NEXTVAL,:name)
@@ -87,10 +86,10 @@ test_BindEmptyString cfg = do
 ||| Verify NUMBER integer binding.
 |||
 export
-test_BindInt : ConnectInfo -> IO (Either OracleError ())
-test_BindInt cfg = do
+test_BindInt : Connection -> IO (Either OracleError ())
+test_BindInt conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,age)
       VALUES(people_seq.NEXTVAL,'Age',:age)
@@ -105,10 +104,10 @@ test_BindInt cfg = do
 ||| Verify floating-point NUMBER binding.
 |||
 export
-test_BindDouble : ConnectInfo -> IO (Either OracleError ())
-test_BindDouble cfg = do
+test_BindDouble : Connection -> IO (Either OracleError ())
+test_BindDouble conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,salary)
       VALUES(people_seq.NEXTVAL,'Salary',:salary)
@@ -123,10 +122,10 @@ test_BindDouble cfg = do
 ||| Verify TRUE boolean binding.
 |||
 export
-test_BindBoolTrue : ConnectInfo -> IO (Either OracleError ())
-test_BindBoolTrue cfg = do
+test_BindBoolTrue : Connection -> IO (Either OracleError ())
+test_BindBoolTrue conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,active)
       VALUES(people_seq.NEXTVAL,'True',:active)
@@ -141,10 +140,10 @@ test_BindBoolTrue cfg = do
 ||| Verify FALSE boolean binding.
 |||
 export
-test_BindBoolFalse : ConnectInfo -> IO (Either OracleError ())
-test_BindBoolFalse cfg = do
+test_BindBoolFalse : Connection -> IO (Either OracleError ())
+test_BindBoolFalse conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,active)
       VALUES(people_seq.NEXTVAL,'False',:active)
@@ -159,10 +158,10 @@ test_BindBoolFalse cfg = do
 ||| Verify CLOB binding.
 |||
 export
-test_BindClob : ConnectInfo -> IO (Either OracleError ())
-test_BindClob cfg = do
+test_BindClob : Connection -> IO (Either OracleError ())
+test_BindClob conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,notes)
       VALUES(people_seq.NEXTVAL,'Clob',:notes)
@@ -177,10 +176,10 @@ test_BindClob cfg = do
 ||| Verify BLOB binding.
 |||
 export
-test_BindBlob : ConnectInfo -> IO (Either OracleError ())
-test_BindBlob cfg = do
+test_BindBlob : Connection -> IO (Either OracleError ())
+test_BindBlob conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO blobs(id,payload)
       VALUES(blobs_seq.NEXTVAL,:payload)
@@ -198,10 +197,10 @@ test_BindBlob cfg = do
 ||| Verify DATE binding.
 |||
 export
-test_BindDate : ConnectInfo -> IO (Either OracleError ())
-test_BindDate cfg = do
+test_BindDate : Connection -> IO (Either OracleError ())
+test_BindDate conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,birth_date)
       VALUES(people_seq.NEXTVAL,'Date',:d)
@@ -220,10 +219,10 @@ test_BindDate cfg = do
 ||| Verify TIMESTAMP binding.
 |||
 export
-test_BindTimestamp : ConnectInfo -> IO (Either OracleError ())
-test_BindTimestamp cfg = do
+test_BindTimestamp : Connection -> IO (Either OracleError ())
+test_BindTimestamp conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,hire_timestamp)
       VALUES(people_seq.NEXTVAL,'TS',:ts)
@@ -243,10 +242,10 @@ test_BindTimestamp cfg = do
 ||| Verify TIMESTAMP WITH TIME ZONE binding.
 |||
 export
-test_BindTimestampTZ : ConnectInfo -> IO (Either OracleError ())
-test_BindTimestampTZ cfg = do
+test_BindTimestampTZ : Connection -> IO (Either OracleError ())
+test_BindTimestampTZ conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,meeting_time_tz)
       VALUES(people_seq.NEXTVAL,'TZ',:ts)
@@ -270,10 +269,10 @@ test_BindTimestampTZ cfg = do
 ||| Verify TIMESTAMP WITH LOCAL TIME ZONE binding.
 |||
 export
-test_BindTimestampLTZ : ConnectInfo -> IO (Either OracleError ())
-test_BindTimestampLTZ cfg = do
+test_BindTimestampLTZ : Connection -> IO (Either OracleError ())
+test_BindTimestampLTZ conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,login_time_ltz)
       VALUES(people_seq.NEXTVAL,'LTZ',:ts)
@@ -295,10 +294,10 @@ test_BindTimestampLTZ cfg = do
 ||| Verify INTERVAL YEAR TO MONTH binding.
 |||
 export
-test_BindIntervalYM : ConnectInfo -> IO (Either OracleError ())
-test_BindIntervalYM cfg = do
+test_BindIntervalYM : Connection -> IO (Either OracleError ())
+test_BindIntervalYM conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,vacation_length)
       VALUES(people_seq.NEXTVAL,'YM',:v)
@@ -317,10 +316,10 @@ test_BindIntervalYM cfg = do
 ||| Verify INTERVAL DAY TO SECOND binding.
 |||
 export
-test_BindIntervalDS : ConnectInfo -> IO (Either OracleError ())
-test_BindIntervalDS cfg = do
+test_BindIntervalDS : Connection -> IO (Either OracleError ())
+test_BindIntervalDS conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people(id,name,uptime)
       VALUES(people_seq.NEXTVAL,'DS',:v)
@@ -340,10 +339,10 @@ test_BindIntervalDS cfg = do
 ||| Verify that many parameters can be bound in a single statement.
 |||
 export
-test_BindManyParameters : ConnectInfo -> IO (Either OracleError ())
-test_BindManyParameters cfg = do
+test_BindManyParameters : Connection -> IO (Either OracleError ())
+test_BindManyParameters conn = do
   result <-
-    runBind cfg
+    runBind conn
       """
       INSERT INTO people
       (
@@ -374,19 +373,18 @@ test_BindManyParameters cfg = do
 ||| Verify that the same prepared statement may be rebound and executed multiple times.
 |||
 export
-test_RebindParameter : ConnectInfo -> IO (Either OracleError ())
-test_RebindParameter cfg =
-  withConnection cfg $ \conn =>
-    withStatement conn
-      """
-      INSERT INTO people(id,name)
-      VALUES(people_seq.NEXTVAL,:name)
-      """
-      $ \stmt =>
-          bind stmt [MkBindParameter ":name" (OracleString "Alice")]
-          >>== \_ =>
-          execute stmt
-          >>== \_ =>
-          bind stmt [MkBindParameter ":name" (OracleString "Bob")]
-          >>== \_ =>
-          execute stmt
+test_RebindParameter : Connection -> IO (Either OracleError ())
+test_RebindParameter conn =
+  withStatement conn
+    """
+    INSERT INTO people(id,name)
+    VALUES(people_seq.NEXTVAL,:name)
+    """
+    $ \stmt =>
+        bind stmt [MkBindParameter ":name" (OracleString "Alice")]
+        >>== \_ =>
+        execute stmt
+        >>== \_ =>
+        bind stmt [MkBindParameter ":name" (OracleString "Bob")]
+        >>== \_ =>
+        execute stmt
