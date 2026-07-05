@@ -19,18 +19,3 @@ prim__dataDouble : AnyPtr -> PrimIO Double
 |||
 export %foreign "C:oracle_data_string,oracle-idris"
 prim__dataString : AnyPtr -> PrimIO String
-
-||| Free a query value.
-|||
-export %foreign "C:oracle_query_value_free,oracle-idris"
-prim__queryValueFree : AnyPtr -> PrimIO ()
-
-||| Get the data of a query value.
-|||
-export %foreign "C:oracle_query_value_data,oracle-idris"
-prim__queryValueData : AnyPtr -> PrimIO AnyPtr
-
-||| Get the native type of a value.
-|||
-export %foreign "C:oracle_query_value_native_type,oracle-idris"
-prim__queryValueNativeType : AnyPtr -> PrimIO Int32

@@ -19,11 +19,6 @@ typedef struct {
     uint32_t lob_count;
 } oracle_stmt;
 
-typedef struct {
-    dpiNativeTypeNum nativeType;
-    dpiData *data;
-} oracle_query_value;
-
 static void oracle_release_vars(oracle_stmt *stmt)
 {
     if (!stmt)
@@ -200,18 +195,23 @@ double oracle_data_double(dpiData *data)
 
 char *oracle_data_string(dpiData *data)
 {
+    dpiBytes *bytes;
+    char *result;
+
     if (!data)
         return NULL;
 
-    dpiBytes *bytes = &data->value.asBytes;
+    bytes = &data->value.asBytes;
 
-    char *result = malloc(bytes->length + 1);
+    if (!bytes->ptr)
+        return NULL;
 
-    if(!result)
-       return NULL;
+    result = malloc(bytes->length + 1);
+
+    if (!result)
+        return NULL;
 
     memcpy(result, bytes->ptr, bytes->length);
-
     result[bytes->length] = '\0';
 
     return result;
@@ -742,33 +742,6 @@ int32_t oracle_column_type(oracle_stmt *stmt, int32_t column)
     return info.typeInfo.oracleTypeNum;
 }
 
-void *oracle_column_value(oracle_stmt *stmt, int32_t column)
-{
-    dpiNativeTypeNum nativeType;
-    dpiData *data;
-
-    if (dpiStmt_getQueryValue(
-            stmt->stmt,
-            column + 1,
-            &nativeType,
-            &data) < 0)
-    {
-        oracle_capture_last_error();
-        return NULL;
-    }
-
-    oracle_query_value *value = malloc(sizeof(oracle_query_value));
-
-    if (!value)
-        return NULL;
-
-    value->nativeType = nativeType;
-    value->data = data;
-
-    return value;
-}
-
-/*
 dpiData *oracle_column_value(oracle_stmt *stmt, int32_t column)
 {
     dpiNativeTypeNum nativeType;
@@ -784,31 +757,7 @@ dpiData *oracle_column_value(oracle_stmt *stmt, int32_t column)
         return NULL;
     }
 
-    printf("native=%d data=%p\n", nativeType, data);
-
     return data;
-}
-*/
-
-int32_t oracle_query_value_native_type(oracle_query_value *value)
-{
-    if (!value)
-        return -1;
-
-    return value->nativeType;
-}
-
-dpiData *oracle_query_value_data(oracle_query_value *value)
-{
-    if (!value)
-        return NULL;
-    
-    return value->data;
-}
-
-void oracle_query_value_free(oracle_query_value *value)
-{
-    free(value);
 }
 
 int32_t oracle_commit(dpiConn *conn)
@@ -886,24 +835,32 @@ int64_t oracle_lob_size(dpiLob *lob)
 
 char *oracle_lob_read(dpiLob *lob, int64_t offset, int64_t length)
 {
-    char *buffer = malloc(length + 1);
+    uint64_t actual;
+    char *buffer;
+
+    if (!lob)
+        return NULL;
+
+    buffer = malloc(length + 1);
 
     if (!buffer)
         return NULL;
+
+    actual = 0;
 
     if (dpiLob_readBytes(
             lob,
             offset,
             length,
             buffer,
-            NULL) < 0)
+            &actual) < 0)
     {
         oracle_capture_last_error();
         free(buffer);
         return NULL;
     }
 
-    buffer[length] = 0;
+    buffer[actual] = '\0';
 
     return buffer;
 }
@@ -917,6 +874,52 @@ void oracle_lob_release(dpiLob *lob)
 void oracle_lob_free_buffer(char *buffer)
 {
     free(buffer);
+}
+
+char *oracle_clob_read(dpiLob *lob)
+{
+    uint64_t chars;
+    uint64_t bytes;
+    char *buffer;
+
+    if (!lob)
+        return NULL;
+
+    if (dpiLob_getSize(lob, &chars) < 0)
+    {
+        oracle_capture_last_error();
+        return NULL;
+    }
+
+    if (dpiLob_getBufferSize(
+            lob,
+            chars,
+            &bytes) < 0)
+    {
+        oracle_capture_last_error();
+        return NULL;
+    }
+
+    buffer = malloc(bytes + 1);
+
+    if (!buffer)
+        return NULL;
+
+    if (dpiLob_readBytes(
+            lob,
+            1,
+            chars,
+            buffer,
+            &bytes) < 0)
+    {
+        oracle_capture_last_error();
+        free(buffer);
+        return NULL;
+    }
+
+    buffer[bytes] = '\0';
+
+    return buffer;
 }
 
 int32_t oracle_timestamp_year(void *ptr)

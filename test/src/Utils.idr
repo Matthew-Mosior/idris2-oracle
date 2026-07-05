@@ -110,9 +110,9 @@ installSchema conn =
 export
 clearTables : Connection -> IO (Either OracleError ())
 clearTables conn =
-  execute_ conn "DELETE FROM blobs" []
+  execute_ conn "TRUNCATE TABLE blobs" []
     >>== \_ =>
-  execute_ conn "DELETE FROM people" []
+  execute_ conn "TRUNCATE TABLE people" []
 
 ||| Populate the PEOPLE table with the standard integration test fixture.
 |||
@@ -311,14 +311,17 @@ export
 resetDatabase : Connection -> IO (Either OracleError ())
 resetDatabase conn =
   clearTables conn
+  >>== \_ =>
+  seedPeople conn
+  >>== \_ =>
+  seedBlobs conn
   >>== \_ => do
-    p <- seedPeople conn
-    case p of
+    c <- commit conn
+    case c of
       Left err => do
-        putStrLn ("error: \{show err}")
+        putStrLn "error: \{show err}"
         pure (Left err)
       Right _  => do
-         rows <- query conn "SELECT COUNT(*) FROM people" []
-         putStrLn ("People after seed: " ++ show rows)
-         seedBlobs conn >>== \_ =>
-           commit conn
+        rows <- query conn "SELECT COUNT(*) FROM people" []
+        putStrLn ("People after seed: " ++ show rows)
+        pure (Right ())

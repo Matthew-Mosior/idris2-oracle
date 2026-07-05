@@ -41,7 +41,7 @@ test_QuerySingleRow conn = do
     \_ =>
       query conn
         """
-        SELECT name
+        SELECT created_at
         FROM people
         WHERE name = 'Alice'
         """
