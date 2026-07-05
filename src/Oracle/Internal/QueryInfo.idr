@@ -31,29 +31,35 @@ queryColumnInfo info = do
 export
 withQueryInfo : AnyPtr -> Int32 -> (AnyPtr -> IO a) -> IO (Either OracleError a)
 withQueryInfo stmt column action = do
-  ptr <- primIO (prim__queryInfo stmt column)
-  case prim__nullAnyPtr ptr == 1 of
-    True  =>
-      Left <$> getLastError
-    False => do
-      res <- runElinIO (withQueryInfo' ptr)
-      case res of
-        Right res' =>
-          pure (Right res')
-        Left err   =>
-          assert_total $ idris_crash "Data.Oracle.Internal.QueryInfo: \{show err}"
+  result <- runElinIO (withQueryInfo' stmt column)
+  case result of
+    Right value =>
+      case value of
+        Left err     =>
+          pure (Left err)
+        Right value' =>
+          pure (Right value')
+    Left err    =>
+      assert_total $ idris_crash "Data.Oracle.Internal.withQueryInfo: \{show err}"
   where
-    acquire : AnyPtr -> Elin World [] AnyPtr
-    acquire ptr =
-      liftIO $ pure ptr
-    release : AnyPtr -> Elin World [] ()
-    release ptr =
-     liftIO $ primIO (prim__queryInfoFree ptr)
-    use : AnyPtr -> Elin World [] a
+    acquire : AnyPtr -> Int32 -> F1 World AnyPtr
+    acquire stmt column =
+      ioToF1 (primIO (prim__queryInfo stmt column))
+    use : AnyPtr -> F1 World (Either OracleError a)
     use ptr =
-      liftIO $ action ptr
-    withQueryInfo' : AnyPtr -> Elin World [] a
-    withQueryInfo' ptr =
-      bracket (acquire ptr)
-              use
-              release
+      ioToF1 ( do case prim__nullAnyPtr ptr == 1 of
+                    True  => do
+                      lasterr <- getLastError
+                      pure (Left lasterr)
+                    False => do
+                      ptr' <- action ptr
+                      pure (Right ptr')
+             )
+    release : AnyPtr -> F1' World
+    release ptr =
+      ioToF1 (primIO (prim__queryInfoFree ptr))
+    withQueryInfo' : AnyPtr -> Int32 -> Elin World [] (Either OracleError a)
+    withQueryInfo' stmt column =
+      bracket (runIO (acquire stmt column))
+              (\ptr => runIO (use ptr))
+              (\ptr => runIO (release ptr))

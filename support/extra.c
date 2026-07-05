@@ -223,19 +223,14 @@ char *oracle_data_string(dpiData *data)
 {
     dpiBytes *bytes = &data->value.asBytes;
 
-    printf("ptr=%p len=%u\n",
-           bytes->ptr,
-           (unsigned) bytes->length);
-
     if (!bytes->ptr)
         return strdup("<NULL PTR>");
 
     char *result = malloc(bytes->length + 1);
 
     memcpy(result, bytes->ptr, bytes->length);
-    result[bytes->length] = '\0';
 
-    printf("value='%s'\n", result);
+    result[bytes->length] = '\0';
 
     return result;
 }
@@ -797,6 +792,14 @@ int32_t oracle_query_value_native_type(oracle_query_value *value)
         return -1;
 
     return value->nativeType;
+}
+
+dpiData *oracle_query_value_data(oracle_query_value *value)
+{
+    if (!value)
+        return NULL;
+    
+    return value->data;
 }
 
 void oracle_query_value_free(oracle_query_value *value)
