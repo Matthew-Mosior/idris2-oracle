@@ -314,7 +314,8 @@ resetDatabase conn =
   >>== \_ => do
     p <- seedPeople conn
     case p of
-      Left err =>
+      Left err => do
+        putStrLn ("error: \{show err}")
         pure (Left err)
       Right _  => do
          rows <- query conn "SELECT COUNT(*) FROM people" []

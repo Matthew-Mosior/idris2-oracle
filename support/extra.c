@@ -174,59 +174,41 @@ uint32_t oracle_query_info_size(dpiQueryInfo *info)
     return info->typeInfo.sizeInChars;
 }
 
-int32_t oracle_data_is_null(oracle_query_value *value)
+int32_t oracle_data_is_null(dpiData *data)
 {
-    if (!value)
+    if (!data)
         return 1;
 
-    return value->data->isNull;
+    return data->isNull;
 }
 
-int64_t oracle_data_int64(oracle_query_value *value)
+int64_t oracle_data_int64(dpiData *data)
 {
-    if (!value)
+    if (!data)
         return 0;
 
-    return value->data->value.asInt64;
+    return data->value.asInt64;
 }
 
-double oracle_data_double(oracle_query_value *value)
+double oracle_data_double(dpiData *data)
 {
-    if (!value)
+    if (!data)
         return 0;
 
-    return value->data->value.asDouble;
+    return data->value.asDouble;
 }
-
-/*
-char *oracle_data_string(oracle_query_value *value)
-{
-    if (!value)
-        return NULL;
-
-    dpiBytes *bytes = &value->data->value.asBytes;
-
-    char *result = malloc(bytes->length + 1);
-
-    if (!result)
-        return NULL;
-
-    memcpy(result, bytes->ptr, bytes->length);
-
-    result[bytes->length] = '\0';
-
-    return result;
-}
-*/
 
 char *oracle_data_string(dpiData *data)
 {
+    if (!data)
+        return NULL;
+
     dpiBytes *bytes = &data->value.asBytes;
 
-    if (!bytes->ptr)
-        return strdup("<NULL PTR>");
-
     char *result = malloc(bytes->length + 1);
+
+    if(!result)
+       return NULL;
 
     memcpy(result, bytes->ptr, bytes->length);
 
@@ -786,6 +768,28 @@ void *oracle_column_value(oracle_stmt *stmt, int32_t column)
     return value;
 }
 
+/*
+dpiData *oracle_column_value(oracle_stmt *stmt, int32_t column)
+{
+    dpiNativeTypeNum nativeType;
+    dpiData *data;
+
+    if (dpiStmt_getQueryValue(
+            stmt->stmt,
+            column + 1,
+            &nativeType,
+            &data) < 0)
+    {
+        oracle_capture_last_error();
+        return NULL;
+    }
+
+    printf("native=%d data=%p\n", nativeType, data);
+
+    return data;
+}
+*/
+
 int32_t oracle_query_value_native_type(oracle_query_value *value)
 {
     if (!value)
@@ -833,36 +837,36 @@ int32_t oracle_rollback(dpiConn *conn)
     return 0;
 }
 
-dpiLob *oracle_data_lob(oracle_query_value *value)
+dpiLob *oracle_data_lob(dpiData *data)
 {
-    if (!value)
+    if (!data)
         return NULL;
 
-    return value->data->value.asLOB;
+    return data->value.asLOB;
 }
 
-dpiTimestamp *oracle_data_timestamp(oracle_query_value *value)
+dpiTimestamp *oracle_data_timestamp(dpiData *data)
 {
-    if (!value)
+    if (!data)
         return NULL;
 
-    return &value->data->value.asTimestamp;
+    return &data->value.asTimestamp;
 }
 
-dpiIntervalDS *oracle_data_interval_ds(oracle_query_value *value)
+dpiIntervalDS *oracle_data_interval_ds(dpiData *data)
 {
-    if (!value)
+    if (!data)
         return NULL;
 
-    return &value->data->value.asIntervalDS;
+    return &data->value.asIntervalDS;
 }
 
-dpiIntervalYM *oracle_data_interval_ym(oracle_query_value *value)
+dpiIntervalYM *oracle_data_interval_ym(dpiData *data)
 {
-    if (!value)
+    if (!data)
         return NULL;
 
-    return &value->data->value.asIntervalYM;
+    return &data->value.asIntervalYM;
 }
 
 int64_t oracle_lob_size(dpiLob *lob)
