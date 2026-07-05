@@ -19,6 +19,11 @@ typedef struct {
     uint32_t lob_count;
 } oracle_stmt;
 
+typedef struct {
+    dpiNativeTypeNum nativeType;
+    dpiData *data;
+} oracle_query_value;
+
 static void oracle_release_vars(oracle_stmt *stmt)
 {
     if (!stmt)
@@ -169,36 +174,37 @@ uint32_t oracle_query_info_size(dpiQueryInfo *info)
     return info->typeInfo.sizeInChars;
 }
 
-int32_t oracle_data_is_null(dpiData *data)
+int32_t oracle_data_is_null(oracle_query_value *value)
 {
-    if (!data)
+    if (!value)
         return 1;
 
-    return data->isNull;
+    return value->data->isNull;
 }
 
-int64_t oracle_data_int64(dpiData *data)
+int64_t oracle_data_int64(oracle_query_value *value)
 {
-    if (!data)
+    if (!value)
         return 0;
 
-    return data->value.asInt64;
+    return value->data->value.asInt64;
 }
 
-double oracle_data_double(dpiData *data)
+double oracle_data_double(oracle_query_value *value)
 {
-    if (!data)
-        return 0.0;
+    if (!value)
+        return 0;
 
-    return data->value.asDouble;
+    return value->data->value.asDouble;
 }
 
-char *oracle_data_string(dpiData *data)
+/*
+char *oracle_data_string(oracle_query_value *value)
 {
-    if (!data)
+    if (!value)
         return NULL;
 
-    dpiBytes *bytes = &data->value.asBytes;
+    dpiBytes *bytes = &value->data->value.asBytes;
 
     char *result = malloc(bytes->length + 1);
 
@@ -206,7 +212,30 @@ char *oracle_data_string(dpiData *data)
         return NULL;
 
     memcpy(result, bytes->ptr, bytes->length);
+
     result[bytes->length] = '\0';
+
+    return result;
+}
+*/
+
+char *oracle_data_string(dpiData *data)
+{
+    dpiBytes *bytes = &data->value.asBytes;
+
+    printf("ptr=%p len=%u\n",
+           bytes->ptr,
+           (unsigned) bytes->length);
+
+    if (!bytes->ptr)
+        return strdup("<NULL PTR>");
+
+    char *result = malloc(bytes->length + 1);
+
+    memcpy(result, bytes->ptr, bytes->length);
+    result[bytes->length] = '\0';
+
+    printf("value='%s'\n", result);
 
     return result;
 }
@@ -738,20 +767,41 @@ int32_t oracle_column_type(oracle_stmt *stmt, int32_t column)
 
 void *oracle_column_value(oracle_stmt *stmt, int32_t column)
 {
-    dpiNativeTypeNum type;
+    dpiNativeTypeNum nativeType;
     dpiData *data;
 
     if (dpiStmt_getQueryValue(
             stmt->stmt,
             column + 1,
-            &type,
+            &nativeType,
             &data) < 0)
     {
         oracle_capture_last_error();
         return NULL;
     }
 
-    return data;
+    oracle_query_value *value = malloc(sizeof(oracle_query_value));
+
+    if (!value)
+        return NULL;
+
+    value->nativeType = nativeType;
+    value->data = data;
+
+    return value;
+}
+
+int32_t oracle_query_value_native_type(oracle_query_value *value)
+{
+    if (!value)
+        return -1;
+
+    return value->nativeType;
+}
+
+void oracle_query_value_free(oracle_query_value *value)
+{
+    free(value);
 }
 
 int32_t oracle_commit(dpiConn *conn)
@@ -780,35 +830,36 @@ int32_t oracle_rollback(dpiConn *conn)
     return 0;
 }
 
-dpiLob *oracle_data_lob(dpiData *data)
+dpiLob *oracle_data_lob(oracle_query_value *value)
 {
-    return data ? data->value.asLOB : NULL;
-}
-
-void *oracle_data_timestamp(dpiData *data)
-{
-    if (!data)
+    if (!value)
         return NULL;
 
-    return &data->value.asTimestamp;
+    return value->data->value.asLOB;
 }
 
-
-void *oracle_data_interval_ds(dpiData *data)
+dpiTimestamp *oracle_data_timestamp(oracle_query_value *value)
 {
-    if (!data)
+    if (!value)
         return NULL;
 
-    return &data->value.asIntervalDS;
+    return &value->data->value.asTimestamp;
 }
 
-
-void *oracle_data_interval_ym(dpiData *data)
+dpiIntervalDS *oracle_data_interval_ds(oracle_query_value *value)
 {
-    if (!data)
+    if (!value)
         return NULL;
 
-    return &data->value.asIntervalYM;
+    return &value->data->value.asIntervalDS;
+}
+
+dpiIntervalYM *oracle_data_interval_ym(oracle_query_value *value)
+{
+    if (!value)
+        return NULL;
+
+    return &value->data->value.asIntervalYM;
 }
 
 int64_t oracle_lob_size(dpiLob *lob)

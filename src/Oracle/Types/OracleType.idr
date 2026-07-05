@@ -1,5 +1,9 @@
 module Oracle.Types.OracleType
 
+import Derive.Prelude
+
+%language ElabReflection
+
 public export
 data OracleType
   = OracleTypeVarchar
@@ -15,19 +19,21 @@ data OracleType
   | OracleTypeBlob
   | OracleTypeUnknown Int32
 
+%runElab derive "OracleType" [Eq,Ord,Show]
+
 ||| Convert an ODPI-C Oracle type number into an Idris representation.
 |||
 export
 fromOracleTypeNum : Int32 -> OracleType
-fromOracleTypeNum 3001 = OracleTypeVarchar
-fromOracleTypeNum 3002 = OracleTypeNumber
-fromOracleTypeNum 3006 = OracleTypeRaw
-fromOracleTypeNum 3007 = OracleTypeDate
-fromOracleTypeNum 3011 = OracleTypeTimestamp
-fromOracleTypeNum 3013 = OracleTypeTimestampTZ
-fromOracleTypeNum 3014 = OracleTypeTimestampLTZ
-fromOracleTypeNum 3015 = OracleTypeIntervalDS
-fromOracleTypeNum 3016 = OracleTypeIntervalYM
-fromOracleTypeNum 3008 = OracleTypeClob
-fromOracleTypeNum 3009 = OracleTypeBlob
+fromOracleTypeNum 2001 = OracleTypeVarchar
+fromOracleTypeNum 2006 = OracleTypeRaw
+fromOracleTypeNum 2010 = OracleTypeNumber
+fromOracleTypeNum 2011 = OracleTypeDate
+fromOracleTypeNum 2012 = OracleTypeTimestamp
+fromOracleTypeNum 2013 = OracleTypeTimestampTZ
+fromOracleTypeNum 2014 = OracleTypeTimestampLTZ
+fromOracleTypeNum 2015 = OracleTypeIntervalDS
+fromOracleTypeNum 2016 = OracleTypeIntervalYM
+fromOracleTypeNum 2017 = OracleTypeClob
+fromOracleTypeNum 2019 = OracleTypeBlob
 fromOracleTypeNum n    = OracleTypeUnknown n

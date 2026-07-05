@@ -1,6 +1,9 @@
 module Oracle.Types.BindParameter
 
+import Derive.Prelude
 import Oracle.Types.Value
+
+%language ElabReflection
 
 ||| Named bind parameter.
 |||
@@ -13,3 +16,5 @@ record BindParameter where
   constructor MkBindParameter
   name  : String
   value : OracleValue
+
+%runElab derive "BindParameter" [Eq,Ord,Show]

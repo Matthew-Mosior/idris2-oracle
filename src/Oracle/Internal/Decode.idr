@@ -26,8 +26,7 @@ import PrimIO
 export
 decodeColumn : AnyPtr -> Int32 -> IO (Either OracleError OracleValue)
 decodeColumn stmt column = do
-  inforesult <-
-    withQueryInfo stmt column pure
+  inforesult <- withQueryInfo stmt column pure
   case inforesult of
     Left err   =>
       pure (Left err)
@@ -44,14 +43,23 @@ decodeColumn stmt column = do
           case  isnull /= 0 of
             True  =>
               pure (Right OracleNull)
-            False =>
+            False => do
+              nativety <- primIO (prim__queryValueNativeType dataptr)
               case fromOracleTypeNum tynum of
                 OracleTypeVarchar   =>
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
                 OracleTypeNumber    =>
-                  Right . OracleInt <$>
-                    primIO (prim__dataInt64 dataptr)
+                  case nativety of
+                    3000 =>
+                      Right . OracleInt <$>
+                        primIO (prim__dataInt64 dataptr)
+                    3001 =>
+                      Right . OracleDouble <$>
+                        primIO (prim__dataDouble dataptr)
+                    _    =>
+                      Right . OracleString <$>
+                        primIO (prim__dataString dataptr)
                 OracleTypeRaw       =>
                   Right . OracleBlob . fromString <$>
                     primIO (prim__dataString dataptr)

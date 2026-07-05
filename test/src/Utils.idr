@@ -309,15 +309,15 @@ seedBlobs conn =
 |||
 export
 resetDatabase : Connection -> IO (Either OracleError ())
-resetDatabase _ = do
-  result <-
-    withConnection connectinfo $ \conn =>
-      clearTables conn
-      >>== \_ =>
-      seedPeople conn
-      >>== \_ =>
-      seedBlobs conn
-      >>== \_ =>
-      commit conn
-
-  pure result
+resetDatabase conn =
+  clearTables conn
+  >>== \_ => do
+    p <- seedPeople conn
+    case p of
+      Left err =>
+        pure (Left err)
+      Right _  => do
+         rows <- query conn "SELECT COUNT(*) FROM people" []
+         putStrLn ("People after seed: " ++ show rows)
+         seedBlobs conn >>== \_ =>
+           commit conn

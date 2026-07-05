@@ -1,5 +1,15 @@
 module Oracle.FFI.Data
 
+||| Free a query value.
+|||
+export %foreign "C:oracle_query_value_free,oracle-idris"
+prim__queryValueFree : AnyPtr -> PrimIO ()
+
+||| Get the native type of a value.
+|||
+export %foreign "C:oracle_query_value_native_type,oracle-idris"
+prim__queryValueNativeType : AnyPtr -> PrimIO Int32
+
 ||| Returns 1 if the dpiData is NULL.
 |||
 export %foreign "C:oracle_data_is_null,oracle-idris"

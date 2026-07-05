@@ -4,6 +4,7 @@ import BindTests
 import ConnectInfoTest
 import ConnectionTests
 import Oracle
+import QueryTests
 import StatementTests
 import System
 import Utils
@@ -42,7 +43,12 @@ main = do
       test_BindIntervalYM conn >>== \_ =>
       test_BindIntervalDS conn >>== \_ =>
       test_BindManyParameters conn >>== \_ =>
-      test_RebindParameter conn
+      test_RebindParameter conn >>== \_ =>
+      test_QueryNoRows conn >>== \_ =>
+      test_QuerySingleRow conn >>== \_ =>
+      test_QueryMultipleRows conn >>== \_ =>
+      test_QueryAllRows conn >>== \_ =>
+      test_QueryWithWhereClause conn
   case result of
     Left err =>
       die (show err)

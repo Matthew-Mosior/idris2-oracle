@@ -1,7 +1,10 @@
 module Oracle.Types.Value
 
 import Data.ByteString
+import Derive.Prelude
 import Oracle.Types.DateTime
+
+%language ElabReflection
 
 ||| Represents a value exchanged with Oracle.
 |||
@@ -22,3 +25,5 @@ data OracleValue
   | OracleTimestampLTZ OracleTimestamp
   | OracleIntervalYM OracleIntervalYM
   | OracleIntervalDS OracleIntervalDS
+
+%runElab derive "OracleValue" [Eq,Ord,Show]
