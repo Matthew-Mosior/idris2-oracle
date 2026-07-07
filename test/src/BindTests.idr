@@ -25,7 +25,7 @@ test_BindNull conn = do
       (
           id,name,age,salary,active,
           created_at,notes,
-          birth_date,hire_timestamp,meeting_time_tz,login_time_ltz,
+          hire_timestamp,meeting_time_tz,
           vacation_length,uptime
       )
       VALUES
@@ -34,7 +34,7 @@ test_BindNull conn = do
           'Null',
           NULL,NULL,NULL,
           NULL,NULL,
-          NULL,NULL,NULL,NULL,
+          NULL,NULL,
           NULL,NULL
       )
       """

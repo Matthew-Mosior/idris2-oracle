@@ -11,9 +11,6 @@ static int g_has_error = 0;
 typedef struct {
     dpiConn *conn;
     dpiStmt *stmt;
-
-    //vardpiLob *lobs[64];
-    //uint32_t lob_count;
 } oracle_stmt;
 
 static void oracle_capture_error(const dpiErrorInfo *error)

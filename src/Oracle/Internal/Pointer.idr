@@ -15,10 +15,3 @@ public export
 record Statement where
   constructor MkStatement
   ptr : AnyPtr
-
-||| Internal query value handle.
-|||
-record QueryValue where
-  constructor MkQueryValue
-  nativetype : Int32
-  querydata  : AnyPtr

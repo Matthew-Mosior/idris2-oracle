@@ -270,7 +270,7 @@ seedBlobs conn =
     """
     [ MkBindParameter
         ":payload"
-        (OracleBlob (fromString "Hello from Oracle BLOB"))
+        (OracleBlob (fromString "FF"))
     ]
 
 ||| Restore the integration database to its standard fixture.
