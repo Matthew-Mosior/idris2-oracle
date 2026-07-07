@@ -28,7 +28,7 @@ test_QueryNoRows conn = do
       case rows of
         [] =>
           pure (Right ())
-        _ =>
+        _  =>
           die "Expected query to return no rows."
 
 ||| Verify that a query returning exactly one row is decoded correctly.
@@ -41,7 +41,7 @@ test_QuerySingleRow conn = do
     \_ =>
       query conn
         """
-        SELECT created_at
+        SELECT name
         FROM people
         WHERE name = 'Alice'
         """
@@ -54,7 +54,7 @@ test_QuerySingleRow conn = do
       case rows of
         [[OracleString "Alice"]] =>
           pure (Right ())
-        _ =>
+        _                        =>
           die "Expected exactly one row containing Alice."
 
 ||| Verify that multiple rows are returned in the expected order.
@@ -73,7 +73,7 @@ test_QueryMultipleRows conn = do
         """
         []
   case result of
-    Left err =>
+    Left err   =>
       die (show err)
     Right rows =>
       case rows of
@@ -100,11 +100,11 @@ test_QueryAllRows conn = do
         """
         []
   case result of
-    Left err =>
+    Left err   =>
       die (show err)
     Right rows =>
       case length rows == 2 of
-        True =>
+        True  =>
           pure (Right ())
         False =>
           die "Expected query to return every row."
@@ -128,11 +128,11 @@ test_QueryWithWhereClause conn = do
             (OracleString "Bob")
         ]
   case result of
-    Left err =>
+    Left err   =>
       die (show err)
     Right rows =>
       case rows of
         [[OracleInt 42]] =>
           pure (Right ())
-        _ =>
+        _                =>
           die "Expected Bob's age to be returned."

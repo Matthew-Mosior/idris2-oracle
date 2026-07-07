@@ -39,11 +39,6 @@ prim__bindClob : AnyPtr -> String -> String -> PrimIO Int32
 export %foreign "C:oracle_bind_blob,oracle-idris"
 prim__bindBlob : AnyPtr -> String -> String -> PrimIO Int32
 
-||| Bind an Oracle DATE value to a named statement parameter.
-|||
-export %foreign "C:oracle_bind_date,oracle-idris"
-prim__bindDate : AnyPtr -> String -> Int16 -> Int8 -> Int8 -> Int8 -> Int8 -> Int8 -> PrimIO Int32
-
 ||| Bind an Oracle TIMESTAMP value to a named statement parameter.
 |||
 export %foreign "C:oracle_bind_timestamp,oracle-idris"
@@ -53,11 +48,6 @@ prim__bindTimestamp : AnyPtr -> String -> Int16 -> Int8 -> Int8 -> Int8 -> Int8 
 |||
 export %foreign "C:oracle_bind_timestamp_tz,oracle-idris"
 prim__bindTimestampTZ : AnyPtr -> String -> Int16 -> Int8 -> Int8 -> Int8 -> Int8 -> Int8 -> Int32 -> Int8 -> Int8 -> PrimIO Int32
-
-||| Bind an Oracle TIMESTAMP WITH LOCAL TIME ZONE value.
-|||
-export %foreign "C:oracle_bind_timestamp_ltz,oracle-idris"
-prim__bindTimestampLTZ : AnyPtr -> String -> Int16 -> Int8 -> Int8 -> Int8 -> Int8 -> Int8 -> Int32 -> PrimIO Int32
 
 ||| Bind an Oracle INTERVAL YEAR TO MONTH value.
 |||

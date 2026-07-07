@@ -9,10 +9,8 @@ data OracleType
   = OracleTypeVarchar
   | OracleTypeNumber
   | OracleTypeRaw
-  | OracleTypeDate
   | OracleTypeTimestamp
   | OracleTypeTimestampTZ
-  | OracleTypeTimestampLTZ
   | OracleTypeIntervalYM
   | OracleTypeIntervalDS
   | OracleTypeClob
@@ -28,10 +26,8 @@ fromOracleTypeNum : Int32 -> OracleType
 fromOracleTypeNum 2001 = OracleTypeVarchar
 fromOracleTypeNum 2006 = OracleTypeRaw
 fromOracleTypeNum 2010 = OracleTypeNumber
-fromOracleTypeNum 2011 = OracleTypeDate
 fromOracleTypeNum 2012 = OracleTypeTimestamp
 fromOracleTypeNum 2013 = OracleTypeTimestampTZ
-fromOracleTypeNum 2014 = OracleTypeTimestampLTZ
 fromOracleTypeNum 2015 = OracleTypeIntervalDS
 fromOracleTypeNum 2016 = OracleTypeIntervalYM
 fromOracleTypeNum 2017 = OracleTypeClob

@@ -57,10 +57,8 @@ installSchema conn =
     active              NUMBER(1) DEFAULT 1,
     created_at          TIMESTAMP,
     notes               CLOB,
-    birth_date          DATE,
     hire_timestamp      TIMESTAMP,
     meeting_time_tz     TIMESTAMP WITH TIME ZONE,
-    login_time_ltz      TIMESTAMP WITH LOCAL TIME ZONE,
     vacation_length     INTERVAL YEAR(4) TO MONTH,
     uptime              INTERVAL DAY(9) TO SECOND(9)
     )
@@ -131,10 +129,8 @@ seedPeople conn =
         active,
         created_at,
         notes,
-        birth_date,
         hire_timestamp,
         meeting_time_tz,
-        login_time_ltz,
         vacation_length,
         uptime
     )
@@ -147,10 +143,8 @@ seedPeople conn =
         :active,
         CURRENT_TIMESTAMP,
         :notes,
-        :birth_date,
         :hire_timestamp,
         :meeting_time_tz,
-        :login_time_ltz,
         :vacation_length,
         :uptime
     )
@@ -160,11 +154,6 @@ seedPeople conn =
     , MkBindParameter ":salary" (OracleInt 90000)
     , MkBindParameter ":active" (OracleBool True)
     , MkBindParameter ":notes"  (OracleClob "Alice Notes")
-    , MkBindParameter ":birth_date" ( OracleDate $
-                                        MkOracleDate
-                                          1994 3 18
-                                          14 30 45
-                                    )
     , MkBindParameter ":hire_timestamp" ( OracleTimestamp $
                                             MkOracleTimestamp
                                               2022 5 10
@@ -179,12 +168,6 @@ seedPeople conn =
                                                (-5)
                                                0
                                          )
-    , MkBindParameter ":login_time_ltz" ( OracleTimestampLTZ $
-                                            MkOracleTimestamp
-                                              2025 7 1
-                                              8 0 0
-                                              111222333
-                                        )
     , MkBindParameter ":vacation_length" ( OracleIntervalYM $
                                              MkOracleIntervalYM
                                                2
@@ -212,10 +195,8 @@ seedPeople conn =
         active,
         created_at,
         notes,
-        birth_date,
         hire_timestamp,
         meeting_time_tz,
-        login_time_ltz,
         vacation_length,
         uptime
     )
@@ -228,10 +209,8 @@ seedPeople conn =
         :active,
         CURRENT_TIMESTAMP,
         :notes,
-        :birth_date,
         :hire_timestamp,
         :meeting_time_tz,
-        :login_time_ltz,
         :vacation_length,
         :uptime
     )
@@ -241,11 +220,6 @@ seedPeople conn =
     , MkBindParameter ":salary" (OracleInt 120000)
     , MkBindParameter ":active" (OracleBool False)
     , MkBindParameter ":notes"  (OracleClob "Bob Notes")
-    , MkBindParameter ":birth_date" ( OracleDate $
-                                        MkOracleDate
-                                          1982 11 2
-                                          6 0 0
-                                    )
     , MkBindParameter ":hire_timestamp" ( OracleTimestamp $
                                             MkOracleTimestamp
                                               2015 1 8
@@ -260,12 +234,6 @@ seedPeople conn =
                                                1
                                                30
                                          )
-    , MkBindParameter ":login_time_ltz" ( OracleTimestampLTZ $
-                                            MkOracleTimestamp
-                                              2024 12 31
-                                              22 30 0
-                                              0
-                                        )
     , MkBindParameter ":vacation_length" ( OracleIntervalYM $
                                              MkOracleIntervalYM
                                                15
@@ -324,4 +292,8 @@ resetDatabase conn =
       Right _  => do
         rows <- query conn "SELECT COUNT(*) FROM people" []
         putStrLn ("People after seed: " ++ show rows)
+        rows' <- query conn "SELECT name FROM people" []
+        putStrLn ("People: " ++ show rows')
+        rows'' <- query conn "SELECT DUMP(name), LENGTH(name), name FROM people" []
+        putStrLn ("Dump from people: " ++ show rows'')
         pure (Right ())

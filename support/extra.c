@@ -12,26 +12,9 @@ typedef struct {
     dpiConn *conn;
     dpiStmt *stmt;
 
-    dpiVar *vars[64];
-    uint32_t var_count;
-
-    dpiLob *lobs[64];
-    uint32_t lob_count;
+    //vardpiLob *lobs[64];
+    //uint32_t lob_count;
 } oracle_stmt;
-
-static void oracle_release_vars(oracle_stmt *stmt)
-{
-    if (!stmt)
-        return;
-
-    for (uint32_t i = 0; i < stmt->var_count; i++)
-    {
-        if (stmt->vars[i])
-            dpiVar_release(stmt->vars[i]);
-    }
-
-    stmt->var_count = 0;
-}
 
 static void oracle_capture_error(const dpiErrorInfo *error)
 {
@@ -217,396 +200,228 @@ char *oracle_data_string(dpiData *data)
     return result;
 }
 
-void oracle_string_free(char *str)
+static int32_t oracle_bind_native(oracle_stmt *stmt, const char *name, dpiNativeTypeNum nativeType, dpiData *data)
 {
-    free(str);
+    int rc = dpiStmt_bindValueByName(
+            stmt->stmt,
+            name,
+            (uint32_t) strlen(name),
+            nativeType,
+            data);
+
+    if (rc < 0)
+        oracle_capture_last_error();
+
+    return rc;
 }
 
 int32_t oracle_bind_null(oracle_stmt *stmt, const char *name)
 {
-    dpiVar *var = NULL;
-    dpiData *data = NULL;
+    dpiData data;
 
-    if (dpiConn_newVar(
-            stmt->conn,
-            DPI_ORACLE_TYPE_VARCHAR,
-            DPI_NATIVE_TYPE_BYTES,
-            1,
-            1,
-            1,
-            0,
-            NULL,
-            &var,
-            &data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
+    memset(&data, 0, sizeof(data));
 
-    data->isNull = 1;
+    dpiData_setNull(&data);
 
-    if (dpiStmt_bindByName(
-            stmt->stmt,
-            name,
-            strlen(name),
-            var) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_BYTES,
+        &data);
 }
 
 int32_t oracle_bind_bool(oracle_stmt *stmt, const char *name, int value)
 {
-    dpiVar *var = NULL;
-    dpiData *data = NULL;
+    dpiData data;
 
-    if (dpiConn_newVar(
-            stmt->conn,
-            DPI_ORACLE_TYPE_BOOLEAN,
-            DPI_NATIVE_TYPE_BOOLEAN,
-            1,
-            0,
-            0,
-            0,
-            NULL,
-            &var,
-            &data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
+    memset(&data, 0, sizeof(data));
 
-    dpiData_setBool(data, value != 0);
+    dpiData_setBool(
+        &data,
+        value != 0);
 
-    if (dpiStmt_bindByName(
-            stmt->stmt,
-            name,
-            strlen(name),
-            var) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_BOOLEAN,
+        &data);
 }
 
 int32_t oracle_bind_string(oracle_stmt *stmt, const char *name, const char *value)
 {
-    dpiVar *var = NULL;
-    dpiData *data = NULL;
+    dpiData data;
 
-    uint32_t len = (uint32_t) strlen(value);
+    memset(&data, 0, sizeof(data));
 
-    if (dpiConn_newVar(
-            stmt->conn,
-            DPI_ORACLE_TYPE_VARCHAR,
-            DPI_NATIVE_TYPE_BYTES,
-            1,
-            len,
-            1,
-            0,
-            NULL,
-            &var,
-            &data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
+    dpiData_setBytes(
+        &data,
+        (char *) value,
+        strlen(value));
 
-    dpiData_setBytes(data, (char *) value, len);
-
-    if (dpiStmt_bindByName(
-            stmt->stmt,
-            name,
-            strlen(name),
-            var) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_BYTES,
+        &data);
 }
 
 int32_t oracle_bind_int64(oracle_stmt *stmt, const char *name, int64_t value)
 {
-    dpiVar *var = NULL;
-    dpiData *data = NULL;
+    dpiData data;
 
-    if (dpiConn_newVar(
-            stmt->conn,
-            DPI_ORACLE_TYPE_NUMBER,
-            DPI_NATIVE_TYPE_INT64,
-            1,
-            0,
-            0,
-            0,
-            NULL,
-            &var,
-            &data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
+    memset(&data, 0, sizeof(data));
 
-    dpiData_setInt64(data, value);
+    dpiData_setInt64(
+        &data,
+        value);
 
-    if (dpiStmt_bindByName(
-            stmt->stmt,
-            name,
-            strlen(name),
-            var) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_INT64,
+        &data);
 }
 
 int32_t oracle_bind_double(oracle_stmt *stmt, const char *name, double value)
 {
-    dpiVar *var = NULL;
-    dpiData *data = NULL;
+    dpiData data;
 
-    if (dpiConn_newVar(
-            stmt->conn,
-            DPI_ORACLE_TYPE_NUMBER,
-            DPI_NATIVE_TYPE_DOUBLE,
-            1,
-            0,
-            0,
-            0,
-            NULL,
-            &var,
-            &data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
+    memset(&data, 0, sizeof(data));
 
-    dpiData_setDouble(data, value);
+    dpiData_setDouble(
+        &data,
+        value);
 
-    if (dpiStmt_bindByName(
-            stmt->stmt,
-            name,
-            strlen(name),
-            var) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_DOUBLE,
+        &data);
 }
 
 int32_t oracle_bind_clob(oracle_stmt *stmt, const char *name, const char *value)
 {
-    dpiVar *var = NULL;
-    dpiData *data = NULL;
-    dpiLob *lob = NULL;
+    dpiData data;
 
-    if (dpiConn_newVar(
-            stmt->conn,
-            DPI_ORACLE_TYPE_CLOB,
-            DPI_NATIVE_TYPE_LOB,
-            1,
-            0,
-            0,
-            0,
-            NULL,
-            &var,
-            &data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
+    memset(&data, 0, sizeof(data));
 
-    if (dpiStmt_bindByName(
-            stmt->stmt,
-            name,
-            (uint32_t) strlen(name),
-            var) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
+    dpiData_setBytes(
+        &data,
+        (char *) value,
+        (uint32_t) strlen(value));
 
-    if (dpiConn_newTempLob(
-            stmt->conn,
-            DPI_ORACLE_TYPE_CLOB,
-            &lob) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
-
-    if (dpiLob_writeBytes(
-            lob,
-            1,
-            value,
-            (uint64_t) strlen(value)) < 0)
-    {
-        oracle_capture_last_error();
-        dpiLob_release(lob);
-        dpiVar_release(var);
-        return -1;
-    }
-
-    if (dpiVar_setFromLob(
-            var,
-            0,
-            lob) < 0)
-    {
-        oracle_capture_last_error();
-        dpiLob_release(lob);
-        dpiVar_release(var);
-        return -1;
-    }
-
-    if (stmt->var_count >= 64 ||
-        stmt->lob_count >= 64)
-    {
-        dpiLob_release(lob);
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-    stmt->lobs[stmt->lob_count++] = lob;
-
-    return 0;
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_BYTES,
+        &data);
 }
 
 int32_t oracle_bind_blob(oracle_stmt *stmt, const char *name, const char *value)
 {
-    dpiVar *var = NULL;
-    dpiData *data = NULL;
-    dpiLob *lob = NULL;
+    dpiData data;
 
-    if (dpiConn_newVar(
-            stmt->conn,
-            DPI_ORACLE_TYPE_BLOB,
-            DPI_NATIVE_TYPE_LOB,
-            1,
-            0,
-            0,
-            0,
-            NULL,
-            &var,
-            &data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
+    memset(&data, 0, sizeof(data));
 
-    if (dpiStmt_bindByName(
-            stmt->stmt,
-            name,
-            (uint32_t) strlen(name),
-            var) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
+    dpiData_setBytes(
+        &data,
+        (char *) value,
+        (uint32_t) strlen(value));
 
-    if (dpiConn_newTempLob(
-            stmt->conn,
-            DPI_ORACLE_TYPE_BLOB,
-            &lob) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(var);
-        return -1;
-    }
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_BYTES,
+        &data);
+}
 
-    if (dpiLob_writeBytes(
-            lob,
-            1,
-            value,
-            (uint64_t) strlen(value)) < 0)
-    {
-        oracle_capture_last_error();
-        dpiLob_release(lob);
-        dpiVar_release(var);
-        return -1;
-    }
+int32_t oracle_bind_timestamp(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t fsecond)
+{
+    dpiData data;
 
-    if (dpiVar_setFromLob(
-            var,
-            0,
-            lob) < 0)
-    {
-        oracle_capture_last_error();
-        dpiLob_release(lob);
-        dpiVar_release(var);
-        return -1;
-    }
+    memset(&data, 0, sizeof(data));
 
-    if (stmt->var_count >= 64 ||
-        stmt->lob_count >= 64)
-    {
-        dpiLob_release(lob);
-        dpiVar_release(var);
-        return -1;
-    }
+    dpiData_setTimestamp(
+        &data,
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+        fsecond,
+        0,
+        0);
 
-    stmt->vars[stmt->var_count++] = var;
-    stmt->lobs[stmt->lob_count++] = lob;
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_TIMESTAMP,
+        &data);
+}
 
-    return 0;
+int32_t oracle_bind_timestamp_tz(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t fsecond, int8_t tzHour, int8_t tzMinute)
+{
+    dpiData data;
+
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setTimestamp(
+        &data,
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+        fsecond,
+        tzHour,
+        tzMinute);
+
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_TIMESTAMP,
+        &data);
+}
+
+int32_t oracle_bind_interval_ym(oracle_stmt *stmt, const char *name, int32_t years, int32_t months)
+{
+    dpiData data;
+
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setIntervalYM(
+        &data,
+        years,
+        months);
+
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_INTERVAL_YM,
+        &data);
+}
+
+int32_t oracle_bind_interval_ds(oracle_stmt *stmt, const char *name, int32_t days, int32_t hours, int32_t minutes, int32_t seconds, int32_t fseconds)
+{
+    dpiData data;
+
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setIntervalDS(
+        &data,
+        days,
+        hours,
+        minutes,
+        seconds,
+        fseconds);
+
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_INTERVAL_DS,
+        &data);
 }
 
 oracle_stmt *oracle_prepare_stmt(dpiConn *conn, const char *sql)
@@ -641,8 +456,6 @@ void oracle_release_stmt(oracle_stmt *stmt)
 {
     if (!stmt)
         return;
-
-    oracle_release_vars(stmt);
 
     if (stmt->stmt)
         dpiStmt_release(stmt->stmt);
@@ -740,6 +553,23 @@ int32_t oracle_column_type(oracle_stmt *stmt, int32_t column)
     }
 
     return info.typeInfo.oracleTypeNum;
+}
+
+dpiNativeTypeNum oracle_column_native_type(oracle_stmt *stmt, int32_t column)
+{
+    dpiNativeTypeNum nativeType;
+    dpiData *data;
+
+    if (dpiStmt_getQueryValue(stmt->stmt,
+                              column + 1,
+                              &nativeType,
+                              &data) < 0)
+    {
+        oracle_capture_last_error();
+        return -1;
+    }
+
+    return nativeType;
 }
 
 dpiData *oracle_column_value(oracle_stmt *stmt, int32_t column)
@@ -1000,250 +830,6 @@ int32_t oracle_interval_ym_years(void *ptr)
 int32_t oracle_interval_ym_months(void *ptr)
 {
     return ((dpiIntervalYM *) ptr)->months;
-}
-
-static int oracle_new_bound_var(oracle_stmt *stmt, const char *name, dpiOracleTypeNum oracleType, dpiNativeTypeNum nativeType, dpiVar **var, dpiData **data)
-{
-    if (dpiConn_newVar(
-            stmt->conn,
-            oracleType,
-            nativeType,
-            1,
-            0,
-            0,
-            0,
-            NULL,
-            var,
-            data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
-
-    if (dpiStmt_bindByName(
-            stmt->stmt,
-            name,
-            strlen(name),
-            *var) < 0)
-    {
-        oracle_capture_last_error();
-        dpiVar_release(*var);
-        *var = NULL;
-        return -1;
-    }
-
-    return 0;
-}
-
-int32_t oracle_bind_date(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second)
-{
-    dpiVar *var;
-    dpiData *data;
-
-    if (oracle_new_bound_var(
-            stmt,
-            name,
-            DPI_ORACLE_TYPE_DATE,
-            DPI_NATIVE_TYPE_TIMESTAMP,
-            &var,
-            &data) < 0)
-        return -1;
-
-    dpiData_setTimestamp(
-            data,
-            year,
-            month,
-            day,
-            hour,
-            minute,
-            second,
-            0,
-            0,
-            0);
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
-}
-
-int32_t oracle_bind_timestamp(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t nanoseconds)
-{
-    dpiVar *var;
-    dpiData *data;
-
-    if (oracle_new_bound_var(
-            stmt,
-            name,
-            DPI_ORACLE_TYPE_TIMESTAMP,
-            DPI_NATIVE_TYPE_TIMESTAMP,
-            &var,
-            &data) < 0)
-        return -1;
-
-    dpiData_setTimestamp(
-            data,
-            year,
-            month,
-            day,
-            hour,
-            minute,
-            second,
-            nanoseconds,
-            0,
-            0);
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
-}
-
-int32_t oracle_bind_timestamp_tz(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t nanoseconds, int8_t tzHour, int8_t tzMinute)
-{
-    dpiVar *var;
-    dpiData *data;
-
-    if (oracle_new_bound_var(
-            stmt,
-            name,
-            DPI_ORACLE_TYPE_TIMESTAMP_TZ,
-            DPI_NATIVE_TYPE_TIMESTAMP,
-            &var,
-            &data) < 0)
-        return -1;
-
-    dpiData_setTimestamp(
-            data,
-            year,
-            month,
-            day,
-            hour,
-            minute,
-            second,
-            nanoseconds,
-            tzHour,
-            tzMinute);
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
-}
-
-int32_t oracle_bind_timestamp_ltz(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t nanoseconds)
-{
-    dpiVar *var;
-    dpiData *data;
-
-    if (oracle_new_bound_var(
-            stmt,
-            name,
-            DPI_ORACLE_TYPE_TIMESTAMP_LTZ,
-            DPI_NATIVE_TYPE_TIMESTAMP,
-            &var,
-            &data) < 0)
-        return -1;
-
-    dpiData_setTimestamp(
-            data,
-            year,
-            month,
-            day,
-            hour,
-            minute,
-            second,
-            nanoseconds,
-            0,
-            0);
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
-}
-
-int32_t oracle_bind_interval_ym(oracle_stmt *stmt, const char *name, int32_t years, int32_t months)
-{
-    dpiVar *var;
-    dpiData *data;
-
-    if (oracle_new_bound_var(
-            stmt,
-            name,
-            DPI_ORACLE_TYPE_INTERVAL_YM,
-            DPI_NATIVE_TYPE_INTERVAL_YM,
-            &var,
-            &data) < 0)
-        return -1;
-
-    dpiData_setIntervalYM(
-            data,
-            years,
-            months);
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
-}
-
-int32_t oracle_bind_interval_ds(oracle_stmt *stmt, const char *name, int32_t days, int32_t hours, int32_t minutes, int32_t seconds, int32_t nanoseconds)
-{
-    dpiVar *var;
-    dpiData *data;
-
-    if (oracle_new_bound_var(
-            stmt,
-            name,
-            DPI_ORACLE_TYPE_INTERVAL_DS,
-            DPI_NATIVE_TYPE_INTERVAL_DS,
-            &var,
-            &data) < 0)
-        return -1;
-
-    dpiData_setIntervalDS(
-            data,
-            days,
-            hours,
-            minutes,
-            seconds,
-            nanoseconds);
-
-    if (stmt->var_count >= 64)
-    {
-        dpiVar_release(var);
-        return -1;
-    }
-
-    stmt->vars[stmt->var_count++] = var;
-
-    return 0;
 }
 
 void* oracle_connect(const char* username, const char* password, const char* connect_string)

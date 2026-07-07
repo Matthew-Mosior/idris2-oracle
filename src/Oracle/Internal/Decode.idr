@@ -57,6 +57,7 @@ decodeColumn stmt column = do
     Left err   =>
       pure (Left err)
     Right info => do
+      nativetype <- primIO (prim__columnNativeType stmt column)
       dataptr <- primIO (prim__columnValue stmt column)
       case prim__nullAnyPtr dataptr == 1 of
         True => do
@@ -73,23 +74,46 @@ decodeColumn stmt column = do
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
                 OracleTypeNumber    =>
-                  Right . OracleString <$>
-                     primIO (prim__dataString dataptr)
+                  case nativetype of
+                    3000 =>
+                      Right . OracleInt <$>
+                        primIO (prim__dataInt64 dataptr)
+                    3001 =>
+                      pure $
+                        Left $
+                          MkOracleError
+                            (-1)
+                            ("Unsupported NUMBER native type: "
+                              ++ show nativetype)
+                            "decodeColumn"
+                            False
+                    3002 =>
+                      pure $
+                        Left $
+                          MkOracleError
+                            (-1)
+                            ("Unsupported NUMBER native type: "
+                              ++ show nativetype)
+                            "decodeColumn"
+                            False
+                    3003 =>
+                      Right . OracleDouble <$>
+                        primIO (prim__dataDouble dataptr)
+                    3004 =>
+                      Right . OracleString . fromString <$>
+                        primIO (prim__dataString dataptr)
+                    _ =>
+                      pure $
+                        Left $
+                          MkOracleError
+                            (-1)
+                            ("Unsupported NUMBER native type: "
+                              ++ show nativetype)
+                            "decodeColumn"
+                            False
                 OracleTypeRaw       =>
                   Right . OracleBlob . fromString <$>
                     primIO (prim__dataString dataptr)
-                OracleTypeDate      => do
-                  ts <- primIO (prim__dataTimestamp dataptr)
-                  pure $
-                    Right $
-                      OracleDate $
-                        MkOracleDate
-                          !(primIO (prim__timestampYear ts))
-                          !(primIO (prim__timestampMonth ts))
-                          !(primIO (prim__timestampDay ts))
-                          !(primIO (prim__timestampHour ts))
-                          !(primIO (prim__timestampMinute ts))
-                          !(primIO (prim__timestampSecond ts))
                 OracleTypeTimestamp => do
                   ts <- primIO (prim__dataTimestamp dataptr)
                   pure $
@@ -118,19 +142,6 @@ decodeColumn stmt column = do
                           !(primIO (prim__timestampNanosecond ts))
                           !(primIO (prim__timestampTZHour ts))
                           !(primIO (prim__timestampTZMinute ts))
-                OracleTypeTimestampLTZ => do
-                  ts <- primIO (prim__dataTimestamp dataptr)
-                  pure $
-                    Right $
-                      OracleTimestampLTZ $
-                        MkOracleTimestamp
-                          !(primIO (prim__timestampYear ts))
-                          !(primIO (prim__timestampMonth ts))
-                          !(primIO (prim__timestampDay ts))
-                          !(primIO (prim__timestampHour ts))
-                          !(primIO (prim__timestampMinute ts))
-                          !(primIO (prim__timestampSecond ts))
-                          !(primIO (prim__timestampNanosecond ts))
                 OracleTypeIntervalYM => do
                   iv <- primIO (prim__dataIntervalYM dataptr)
                   pure $

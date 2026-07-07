@@ -194,28 +194,6 @@ test_BindBlob conn = do
     Right () =>
       pure (Right ())
 
-||| Verify DATE binding.
-|||
-export
-test_BindDate : Connection -> IO (Either OracleError ())
-test_BindDate conn = do
-  result <-
-    runBind conn
-      """
-      INSERT INTO people(id,name,birth_date)
-      VALUES(people_seq.NEXTVAL,'Date',:d)
-      """
-      [ MkBindParameter
-          ":d"
-          (OracleDate $
-            MkOracleDate 1995 7 12 13 14 15)
-      ]
-  case result of
-    Left err =>
-      die (show err)
-    Right () =>
-      pure (Right ())
-
 ||| Verify TIMESTAMP binding.
 |||
 export
@@ -259,31 +237,6 @@ test_BindTimestampTZ conn = do
               123456789
               (-5)
               0)
-      ]
-  case result of
-    Left err =>
-      die (show err)
-    Right () =>
-      pure (Right ())
-
-||| Verify TIMESTAMP WITH LOCAL TIME ZONE binding.
-|||
-export
-test_BindTimestampLTZ : Connection -> IO (Either OracleError ())
-test_BindTimestampLTZ conn = do
-  result <-
-    runBind conn
-      """
-      INSERT INTO people(id,name,login_time_ltz)
-      VALUES(people_seq.NEXTVAL,'LTZ',:ts)
-      """
-      [ MkBindParameter
-          ":ts"
-          (OracleTimestampLTZ $
-            MkOracleTimestamp
-              2025 6 1
-              12 34 56
-              987654321)
       ]
   case result of
     Left err =>

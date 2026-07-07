@@ -9,23 +9,6 @@ import Oracle.Types.ColumnInfo
 import Oracle.Types.Error
 import Oracle.Types.OracleType
 
-||| Convert a dpiQueryInfo structure into a ColumnInfo record.
-|||
-export
-queryColumnInfo : AnyPtr -> IO (Either OracleError ColumnInfo)
-queryColumnInfo info = do
-  name     <- primIO (prim__queryInfoName info)
-  ty       <- primIO (prim__queryInfoType info)
-  size     <- primIO (prim__queryInfoSize info)
-  nullable <- primIO (prim__queryInfoNullable info)
-  pure $
-    Right $
-      MkColumnInfo
-        name
-        (fromOracleTypeNum ty)
-        (cast size)
-        (nullable /= 0)
-
 ||| Acquire a dpiQueryInfo structure, execute an action, and guarantee cleanup.
 |||
 export
