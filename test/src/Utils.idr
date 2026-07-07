@@ -54,7 +54,7 @@ installSchema conn =
     name                VARCHAR2(100) NOT NULL,
     age                 NUMBER,
     salary              NUMBER,
-    active              NUMBER(1) DEFAULT 1,
+    active              BOOLEAN,
     created_at          TIMESTAMP,
     notes               CLOB,
     hire_timestamp      TIMESTAMP,
@@ -150,8 +150,8 @@ seedPeople conn =
     )
     """
     [ MkBindParameter ":name"   (OracleString "Alice")
-    , MkBindParameter ":age"    (OracleInt 30)
-    , MkBindParameter ":salary" (OracleInt 90000)
+    , MkBindParameter ":age"    (OracleNumber 30)
+    , MkBindParameter ":salary" (OracleNumber 90000)
     , MkBindParameter ":active" (OracleBool True)
     , MkBindParameter ":notes"  (OracleClob "Alice Notes")
     , MkBindParameter ":hire_timestamp" ( OracleTimestamp $
@@ -216,8 +216,8 @@ seedPeople conn =
     )
     """
     [ MkBindParameter ":name"   (OracleString "Bob")
-    , MkBindParameter ":age"    (OracleInt 42)
-    , MkBindParameter ":salary" (OracleInt 120000)
+    , MkBindParameter ":age"    (OracleNumber 42)
+    , MkBindParameter ":salary" (OracleNumber 120000)
     , MkBindParameter ":active" (OracleBool False)
     , MkBindParameter ":notes"  (OracleClob "Bob Notes")
     , MkBindParameter ":hire_timestamp" ( OracleTimestamp $

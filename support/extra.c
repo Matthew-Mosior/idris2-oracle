@@ -237,22 +237,6 @@ int32_t oracle_data_is_null(dpiData *data)
     return data->isNull;
 }
 
-int64_t oracle_data_int64(dpiData *data)
-{
-    if (!data)
-        return 0;
-
-    return data->value.asInt64;
-}
-
-uint64_t oracle_data_uint64(dpiData *data)
-{
-    if (!data)
-        return 0;
-
-    return data->value.asUint64;
-}
-
 double oracle_data_double(dpiData *data)
 {
     if (!data)
@@ -347,40 +331,6 @@ int32_t oracle_bind_string(oracle_stmt *stmt, const char *name, const char *valu
         stmt,
         name,
         DPI_NATIVE_TYPE_BYTES,
-        &data);
-}
-
-int32_t oracle_bind_int64(oracle_stmt *stmt, const char *name, int64_t value)
-{
-    dpiData data;
-
-    memset(&data, 0, sizeof(data));
-
-    dpiData_setInt64(
-        &data,
-        value);
-
-    return oracle_bind_native(
-        stmt,
-        name,
-        DPI_NATIVE_TYPE_INT64,
-        &data);
-}
-
-int32_t oracle_bind_uint64(oracle_stmt *stmt, const char *name, uint64_t value)
-{
-    dpiData data;
-
-    memset(&data, 0, sizeof(data));
-
-    dpiData_setUint64(
-        &data,
-        value);
-
-    return oracle_bind_native(
-        stmt,
-        name,
-        DPI_NATIVE_TYPE_UINT64,
         &data);
 }
 
@@ -638,23 +588,6 @@ int32_t oracle_column_count(oracle_stmt *stmt)
     }
 
     return count;
-}
-
-dpiNativeTypeNum oracle_column_native_type(oracle_stmt *stmt, int32_t column)
-{
-    dpiNativeTypeNum nativeType;
-    dpiData *data;
-
-    if (dpiStmt_getQueryValue(stmt->stmt,
-                              column + 1,
-                              &nativeType,
-                              &data) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
-
-    return nativeType;
 }
 
 dpiData *oracle_column_value(oracle_stmt *stmt, int32_t column)

@@ -55,8 +55,3 @@ prim__columnCount : AnyPtr -> PrimIO Int32
 |||
 export %foreign "C:oracle_column_value,oracle-idris"
 prim__columnValue : AnyPtr -> Int32 -> PrimIO AnyPtr
-
-||| Retrieve the native type of a column.
-|||
-export %foreign "C:oracle_column_native_type,oracle-idris"
-prim__columnNativeType : AnyPtr -> Int32 -> PrimIO Int32

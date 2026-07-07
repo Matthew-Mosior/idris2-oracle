@@ -57,7 +57,6 @@ decodeColumn stmt column = do
     Left err   =>
       pure (Left err)
     Right info => do
-      nativetype <- primIO (prim__columnNativeType stmt column)
       dataptr    <- primIO (prim__columnValue stmt column)
       case prim__nullAnyPtr dataptr == 1 of
         True => do
@@ -74,41 +73,12 @@ decodeColumn stmt column = do
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
                 OracleTypeNumber      =>
-                  case nativetype of
-                    3000 =>
-                      Right . OracleInt <$>
-                        primIO (prim__dataInt64 dataptr)
-                    3001 =>
-                      Right . OracleUInt <$>
-                        primIO (prim__dataUInt64 dataptr)
-                    3002 =>
-                      pure $
-                        Left $
-                          MkOracleError
-                            (-1)
-                            ("Unsupported NUMBER native type: "
-                              ++ show nativetype)
-                            "decodeColumn"
-                            False
-                    3003 =>
-                      Right . OracleDouble <$>
-                        primIO (prim__dataDouble dataptr)
-                    3004 =>
-                      Right . OracleString . fromString <$>
-                        primIO (prim__dataString dataptr)
-                    _    =>
-                      pure $
-                        Left $
-                          MkOracleError
-                            (-1)
-                            ("Unsupported NUMBER native type: "
-                              ++ show nativetype)
-                            "decodeColumn"
-                            False
+                  Right . OracleNumber <$>
+                    primIO (prim__dataDouble dataptr)
                 OracleTypeRaw         =>
                   Right . OracleBlob . fromString <$>
                     primIO (prim__dataString dataptr)
-                OracleTypeTimestamp => do
+                OracleTypeTimestamp   => do
                   ts <- primIO (prim__dataTimestamp dataptr)
                   pure $
                     Right $

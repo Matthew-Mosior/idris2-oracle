@@ -12,16 +12,6 @@ prim__bindNull : AnyPtr -> String -> PrimIO Int32
 export %foreign "C:oracle_bind_string,oracle-idris"
 prim__bindString : AnyPtr -> String -> String -> PrimIO Int32
 
-||| Bind an Int64 value to a named parameter.
-|||
-export %foreign "C:oracle_bind_int64,oracle-idris"
-prim__bindInt64 : AnyPtr -> String -> Int64 -> PrimIO Int32
-
-||| Bind an UInt64 value to a named parameter.
-|||
-export %foreign "C:oracle_bind_uint64,oracle-idris"
-prim__bindUInt64 : AnyPtr -> String -> Bits64 -> PrimIO Int32
-
 ||| Bind a Double value to a named parameter.
 |||
 export %foreign "C:oracle_bind_double,oracle-idris"

@@ -149,13 +149,7 @@ bindOne stmt param =
     OracleString s        =>
       primIO (prim__bindString stmt.ptr param.name s)
         >>= finish
-    OracleInt i           =>
-      primIO (prim__bindInt64 stmt.ptr param.name i)
-        >>= finish
-    OracleUInt i          =>
-      primIO (prim__bindUInt64 stmt.ptr param.name i)
-        >>= finish
-    OracleDouble d        =>
+    OracleNumber d        =>
       primIO (prim__bindDouble stmt.ptr param.name d)
         >>= finish
     OracleBool b          =>

@@ -94,7 +94,7 @@ test_BindInt conn = do
       INSERT INTO people(id,name,age)
       VALUES(people_seq.NEXTVAL,'Age',:age)
       """
-      [ MkBindParameter ":age" (OracleInt 42) ]
+      [ MkBindParameter ":age" (OracleNumber 42) ]
   case result of
     Left err =>
       die (show err)
@@ -112,7 +112,7 @@ test_BindDouble conn = do
       INSERT INTO people(id,name,salary)
       VALUES(people_seq.NEXTVAL,'Salary',:salary)
       """
-      [ MkBindParameter ":salary" (OracleDouble 12345.67) ]
+      [ MkBindParameter ":salary" (OracleNumber 12345.67) ]
   case result of
     Left err =>
       die (show err)
@@ -312,8 +312,8 @@ test_BindManyParameters conn = do
       )
       """
       [ MkBindParameter ":name" (OracleString "Many")
-      , MkBindParameter ":age" (OracleInt 33)
-      , MkBindParameter ":salary" (OracleDouble 1000.5)
+      , MkBindParameter ":age" (OracleNumber 33)
+      , MkBindParameter ":salary" (OracleNumber 1000.5)
       , MkBindParameter ":active" (OracleBool True)
       , MkBindParameter ":notes" (OracleClob "Hello")
       ]
