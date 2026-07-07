@@ -48,20 +48,6 @@ prim__fetch : AnyPtr -> PrimIO Int32
 export %foreign "C:oracle_column_count,oracle-idris"
 prim__columnCount : AnyPtr -> PrimIO Int32
 
-||| Retrieve the name of a column.
-|||
-||| Column indexes are zero-based.
-|||
-export %foreign "C:oracle_column_name,oracle-idris"
-prim__columnName : AnyPtr -> Int32 -> PrimIO String
-
-||| Retrieve the Oracle native type number for a column.
-|||
-||| Returned values typically correspond to DPI_ORACLE_TYPE_* constants.
-|||
-export %foreign "C:oracle_column_type,oracle-idris"
-prim__columnType : AnyPtr -> Int32 -> PrimIO Int32
-
 ||| Retrieve the current row value for a column.
 |||
 ||| This interface is not sufficient for a production-quality Oracle driver.
