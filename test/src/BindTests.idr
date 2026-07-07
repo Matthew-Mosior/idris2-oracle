@@ -186,7 +186,7 @@ test_BindBlob conn = do
       """
       [ MkBindParameter
           ":payload"
-          (OracleBlob (fromString "Hello Blob"))
+          (OracleBlob (fromString "FF"))
       ]
   case result of
     Left err =>
