@@ -131,7 +131,7 @@ test_QueryWithWhereClause conn = do
       die (show err)
     Right rows =>
       case rows of
-        [[OracleInt 42]] =>
+        [[OracleDouble 42.0]] =>
           pure (Right ())
         rows'            =>
           die "Expected Bob's age to be returned."

@@ -58,7 +58,7 @@ decodeColumn stmt column = do
       pure (Left err)
     Right info => do
       nativetype <- primIO (prim__columnNativeType stmt column)
-      dataptr <- primIO (prim__columnValue stmt column)
+      dataptr    <- primIO (prim__columnValue stmt column)
       case prim__nullAnyPtr dataptr == 1 of
         True => do
           lasterr <- getLastError
@@ -70,10 +70,10 @@ decodeColumn stmt column = do
               pure (Right OracleNull)
             False => do
               case info.oracletype of
-                OracleTypeVarchar   =>
+                OracleTypeVarchar     =>
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
-                OracleTypeNumber    =>
+                OracleTypeNumber      =>
                   case nativetype of
                     3000 =>
                       Right . OracleInt <$>
@@ -96,7 +96,7 @@ decodeColumn stmt column = do
                     3004 =>
                       Right . OracleString . fromString <$>
                         primIO (prim__dataString dataptr)
-                    _ =>
+                    _    =>
                       pure $
                         Left $
                           MkOracleError
@@ -105,7 +105,7 @@ decodeColumn stmt column = do
                               ++ show nativetype)
                             "decodeColumn"
                             False
-                OracleTypeRaw       =>
+                OracleTypeRaw         =>
                   Right . OracleBlob . fromString <$>
                     primIO (prim__dataString dataptr)
                 OracleTypeTimestamp => do
@@ -136,7 +136,7 @@ decodeColumn stmt column = do
                           !(primIO (prim__timestampNanosecond ts))
                           !(primIO (prim__timestampTZHour ts))
                           !(primIO (prim__timestampTZMinute ts))
-                OracleTypeIntervalYM => do
+                OracleTypeIntervalYM  => do
                   iv <- primIO (prim__dataIntervalYM dataptr)
                   pure $
                     Right $
@@ -144,7 +144,7 @@ decodeColumn stmt column = do
                         MkOracleIntervalYM
                           !(primIO (prim__intervalYMYears iv))
                           !(primIO (prim__intervalYMMonths iv))
-                OracleTypeIntervalDS => do
+                OracleTypeIntervalDS  => do
                   iv <- primIO (prim__dataIntervalDS dataptr)
                   pure $
                     Right $
@@ -155,7 +155,7 @@ decodeColumn stmt column = do
                           !(primIO (prim__intervalDSMinutes iv))
                           !(primIO (prim__intervalDSSeconds iv))
                           !(primIO (prim__intervalDSNanoseconds iv))
-                OracleTypeBlob      => do
+                OracleTypeBlob        => do
                   lob <- primIO (prim__dataLob dataptr)
                   case prim__nullAnyPtr lob == 1 of
                     True  => do
@@ -171,7 +171,7 @@ decodeColumn stmt column = do
                           bytes <- primIO (prim__lobRead lob 1 size)
                           primIO (prim__lobFreeBuffer bytes)
                           pure (Right $ OracleBlob $ fromString bytes)
-                OracleTypeClob      => do
+                OracleTypeClob        => do
                   lob <- primIO (prim__dataLob dataptr)
                   case prim__nullAnyPtr lob == 1 of
                     True  => do
@@ -181,7 +181,7 @@ decodeColumn stmt column = do
                       text <- primIO (prim__clobRead lob)
                       primIO (prim__lobFreeBuffer text)
                       pure (Right $ OracleClob text)
-                OracleTypeUnknown n =>
+                OracleTypeUnknown n   =>
                   pure $
                     Left $
                       MkOracleError
