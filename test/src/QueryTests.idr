@@ -49,8 +49,7 @@ test_QuerySingleRow conn = do
   case result of
     Left err   =>
       die (show err)
-    Right rows => do
-      putStrLn (show rows)
+    Right rows =>
       case rows of
         [[OracleString "Alice"]] =>
           pure (Right ())
@@ -134,5 +133,5 @@ test_QueryWithWhereClause conn = do
       case rows of
         [[OracleInt 42]] =>
           pure (Right ())
-        _                =>
+        rows'            =>
           die "Expected Bob's age to be returned."

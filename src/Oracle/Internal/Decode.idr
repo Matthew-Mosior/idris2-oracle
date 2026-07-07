@@ -79,14 +79,8 @@ decodeColumn stmt column = do
                       Right . OracleInt <$>
                         primIO (prim__dataInt64 dataptr)
                     3001 =>
-                      pure $
-                        Left $
-                          MkOracleError
-                            (-1)
-                            ("Unsupported NUMBER native type: "
-                              ++ show nativetype)
-                            "decodeColumn"
-                            False
+                      Right . OracleUInt <$>
+                        primIO (prim__dataUInt64 dataptr)
                     3002 =>
                       pure $
                         Left $

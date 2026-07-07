@@ -125,6 +125,7 @@ execute stmt = do
 ||| - OracleNull
 ||| - OracleString
 ||| - OracleInt
+||| - OracleUInt
 ||| - OracleDouble
 ||| - OracleBool
 ||| - OracleClob
@@ -150,6 +151,9 @@ bindOne stmt param =
         >>= finish
     OracleInt i           =>
       primIO (prim__bindInt64 stmt.ptr param.name i)
+        >>= finish
+    OracleUInt i          =>
+      primIO (prim__bindUInt64 stmt.ptr param.name i)
         >>= finish
     OracleDouble d        =>
       primIO (prim__bindDouble stmt.ptr param.name d)

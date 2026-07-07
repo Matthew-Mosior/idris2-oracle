@@ -283,17 +283,5 @@ resetDatabase conn =
   seedPeople conn
   >>== \_ =>
   seedBlobs conn
-  >>== \_ => do
-    c <- commit conn
-    case c of
-      Left err => do
-        putStrLn "error: \{show err}"
-        pure (Left err)
-      Right _  => do
-        rows <- query conn "SELECT COUNT(*) FROM people" []
-        putStrLn ("People after seed: " ++ show rows)
-        rows' <- query conn "SELECT name FROM people" []
-        putStrLn ("People: " ++ show rows')
-        rows'' <- query conn "SELECT DUMP(name), LENGTH(name), name FROM people" []
-        putStrLn ("Dump from people: " ++ show rows'')
-        pure (Right ())
+  >>== \_ =>
+  commit conn

@@ -165,6 +165,14 @@ int64_t oracle_data_int64(dpiData *data)
     return data->value.asInt64;
 }
 
+uint64_t oracle_data_uint64(dpiData *data)
+{
+    if (!data)
+        return 0;
+
+    return data->value.asUint64;
+}
+
 double oracle_data_double(dpiData *data)
 {
     if (!data)
@@ -276,6 +284,23 @@ int32_t oracle_bind_int64(oracle_stmt *stmt, const char *name, int64_t value)
         stmt,
         name,
         DPI_NATIVE_TYPE_INT64,
+        &data);
+}
+
+int32_t oracle_bind_uint64(oracle_stmt *stmt, const char *name, uint64_t value)
+{
+    dpiData data;
+
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setUint64(
+        &data,
+        value);
+
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_UINT64,
         &data);
 }
 
