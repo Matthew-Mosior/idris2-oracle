@@ -13,6 +13,86 @@ typedef struct {
     dpiStmt *stmt;
 } oracle_stmt;
 
+int32_t oracle_timestamp_year(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->year;
+}
+
+int32_t oracle_timestamp_month(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->month;
+}
+
+int32_t oracle_timestamp_day(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->day;
+}
+
+int32_t oracle_timestamp_hour(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->hour;
+}
+
+int32_t oracle_timestamp_minute(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->minute;
+}
+
+int32_t oracle_timestamp_second(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->second;
+}
+
+int32_t oracle_timestamp_fsecond(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->fsecond;
+}
+
+int32_t oracle_timestamp_tz_hour(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->tzHourOffset;
+}
+
+int32_t oracle_timestamp_tz_minute(void *ptr)
+{
+    return ((dpiTimestamp *) ptr)->tzMinuteOffset;
+}
+
+int32_t oracle_interval_ds_days(void *ptr)
+{
+    return ((dpiIntervalDS *) ptr)->days;
+}
+
+int32_t oracle_interval_ds_hours(void *ptr)
+{
+    return ((dpiIntervalDS *) ptr)->hours;
+}
+
+int32_t oracle_interval_ds_minutes(void *ptr)
+{
+    return ((dpiIntervalDS *) ptr)->minutes;
+}
+
+int32_t oracle_interval_ds_seconds(void *ptr)
+{
+    return ((dpiIntervalDS *) ptr)->seconds;
+}
+
+int32_t oracle_interval_ds_fseconds(void *ptr)
+{
+    return ((dpiIntervalDS *) ptr)->fseconds;
+}
+
+int32_t oracle_interval_ym_years(void *ptr)
+{
+    return ((dpiIntervalYM *) ptr)->years;
+}
+
+int32_t oracle_interval_ym_months(void *ptr)
+{
+    return ((dpiIntervalYM *) ptr)->months;
+}
+
 static void oracle_capture_error(const dpiErrorInfo *error)
 {
     if (error == NULL)
@@ -446,6 +526,30 @@ int32_t oracle_bind_interval_ds(oracle_stmt *stmt, const char *name, int32_t day
         &data);
 }
 
+dpiTimestamp *oracle_data_timestamp(dpiData *data)
+{
+    if (!data)
+        return NULL;
+
+    return &data->value.asTimestamp;
+}
+
+dpiIntervalDS *oracle_data_interval_ds(dpiData *data)
+{
+    if (!data)
+        return NULL;
+
+    return &data->value.asIntervalDS;
+}
+
+dpiIntervalYM *oracle_data_interval_ym(dpiData *data)
+{
+    if (!data)
+        return NULL;
+
+    return &data->value.asIntervalYM;
+}
+
 oracle_stmt *oracle_prepare_stmt(dpiConn *conn, const char *sql)
 {
     oracle_stmt *result = malloc(sizeof(oracle_stmt));
@@ -536,47 +640,6 @@ int32_t oracle_column_count(oracle_stmt *stmt)
     return count;
 }
 
-char *oracle_column_name(oracle_stmt *stmt, int32_t column)
-{
-    dpiQueryInfo info;
-
-    if (dpiStmt_getQueryInfo(
-            stmt->stmt,
-            column + 1,
-            &info) < 0)
-    {
-        oracle_capture_last_error();
-        return NULL;
-    }
-
-    char *result = malloc(info.nameLength + 1);
-
-    memcpy(
-        result,
-        info.name,
-        info.nameLength
-    );
-    result[info.nameLength] = '\0';
-
-    return result;
-}
-
-int32_t oracle_column_type(oracle_stmt *stmt, int32_t column)
-{
-    dpiQueryInfo info;
-
-    if (dpiStmt_getQueryInfo(
-            stmt->stmt,
-            column + 1,
-            &info) < 0)
-    {
-        oracle_capture_last_error();
-        return -1;
-    }
-
-    return info.typeInfo.oracleTypeNum;
-}
-
 dpiNativeTypeNum oracle_column_native_type(oracle_stmt *stmt, int32_t column)
 {
     dpiNativeTypeNum nativeType;
@@ -612,62 +675,12 @@ dpiData *oracle_column_value(oracle_stmt *stmt, int32_t column)
     return data;
 }
 
-int32_t oracle_commit(dpiConn *conn)
-{
-    if (!conn)
-        return -1;
-
-    if (dpiConn_commit(conn) < 0) {
-        oracle_capture_last_error();
-        return -1;
-    }
-
-    return 0;
-}
-
-int32_t oracle_rollback(dpiConn *conn)
-{
-    if (!conn)
-        return -1;
-
-    if (dpiConn_rollback(conn) < 0) {
-        oracle_capture_last_error();
-        return -1;
-    }
-
-    return 0;
-}
-
 dpiLob *oracle_data_lob(dpiData *data)
 {
     if (!data)
         return NULL;
 
     return data->value.asLOB;
-}
-
-dpiTimestamp *oracle_data_timestamp(dpiData *data)
-{
-    if (!data)
-        return NULL;
-
-    return &data->value.asTimestamp;
-}
-
-dpiIntervalDS *oracle_data_interval_ds(dpiData *data)
-{
-    if (!data)
-        return NULL;
-
-    return &data->value.asIntervalDS;
-}
-
-dpiIntervalYM *oracle_data_interval_ym(dpiData *data)
-{
-    if (!data)
-        return NULL;
-
-    return &data->value.asIntervalYM;
 }
 
 int64_t oracle_lob_size(dpiLob *lob)
@@ -774,84 +787,30 @@ char *oracle_clob_read(dpiLob *lob)
     return buffer;
 }
 
-int32_t oracle_timestamp_year(void *ptr)
+int32_t oracle_commit(dpiConn *conn)
 {
-    return ((dpiTimestamp *) ptr)->year;
+    if (!conn)
+        return -1;
+
+    if (dpiConn_commit(conn) < 0) {
+        oracle_capture_last_error();
+        return -1;
+    }
+
+    return 0;
 }
 
-int32_t oracle_timestamp_month(void *ptr)
+int32_t oracle_rollback(dpiConn *conn)
 {
-    return ((dpiTimestamp *) ptr)->month;
-}
+    if (!conn)
+        return -1;
 
-int32_t oracle_timestamp_day(void *ptr)
-{
-    return ((dpiTimestamp *) ptr)->day;
-}
+    if (dpiConn_rollback(conn) < 0) {
+        oracle_capture_last_error();
+        return -1;
+    }
 
-int32_t oracle_timestamp_hour(void *ptr)
-{
-    return ((dpiTimestamp *) ptr)->hour;
-}
-
-int32_t oracle_timestamp_minute(void *ptr)
-{
-    return ((dpiTimestamp *) ptr)->minute;
-}
-
-int32_t oracle_timestamp_second(void *ptr)
-{
-    return ((dpiTimestamp *) ptr)->second;
-}
-
-int32_t oracle_timestamp_fsecond(void *ptr)
-{
-    return ((dpiTimestamp *) ptr)->fsecond;
-}
-
-int32_t oracle_timestamp_tz_hour(void *ptr)
-{
-    return ((dpiTimestamp *) ptr)->tzHourOffset;
-}
-
-int32_t oracle_timestamp_tz_minute(void *ptr)
-{
-    return ((dpiTimestamp *) ptr)->tzMinuteOffset;
-}
-
-int32_t oracle_interval_ds_days(void *ptr)
-{
-    return ((dpiIntervalDS *) ptr)->days;
-}
-
-int32_t oracle_interval_ds_hours(void *ptr)
-{
-    return ((dpiIntervalDS *) ptr)->hours;
-}
-
-int32_t oracle_interval_ds_minutes(void *ptr)
-{
-    return ((dpiIntervalDS *) ptr)->minutes;
-}
-
-int32_t oracle_interval_ds_seconds(void *ptr)
-{
-    return ((dpiIntervalDS *) ptr)->seconds;
-}
-
-int32_t oracle_interval_ds_fseconds(void *ptr)
-{
-    return ((dpiIntervalDS *) ptr)->fseconds;
-}
-
-int32_t oracle_interval_ym_years(void *ptr)
-{
-    return ((dpiIntervalYM *) ptr)->years;
-}
-
-int32_t oracle_interval_ym_months(void *ptr)
-{
-    return ((dpiIntervalYM *) ptr)->months;
+    return 0;
 }
 
 void* oracle_connect(const char* username, const char* password, const char* connect_string)
