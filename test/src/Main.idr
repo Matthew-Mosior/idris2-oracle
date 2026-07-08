@@ -7,6 +7,7 @@ import Oracle
 import QueryTests
 import StatementTests
 import System
+import TypedEncodingDecodingTests
 import Utils
 
 main : IO ()
@@ -46,7 +47,8 @@ main = do
       test_QuerySingleRow conn >>== \_ =>
       test_QueryMultipleRows conn >>== \_ =>
       test_QueryAllRows conn >>== \_ =>
-      test_QueryWithWhereClause conn
+      test_QueryWithWhereClause conn >>== \_ =>
+      test_QueryTypedPeople conn
   case result of
     Left err =>
       die (show err)
