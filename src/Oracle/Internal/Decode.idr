@@ -151,6 +151,13 @@ decodeColumn stmt column = do
                       text <- primIO (prim__clobRead lob)
                       primIO (prim__lobFreeBuffer text)
                       pure (Right $ OracleClob text)
+                OracleTypeBoolean     => do
+                  b <- primIO (prim__dataBool dataptr)
+                  case b of
+                    0 =>
+                      pure (Right $ OracleBool False) 
+                    1 =>
+                      pure (Right $ OracleBool True)
                 OracleTypeUnknown n   =>
                   pure $
                     Left $

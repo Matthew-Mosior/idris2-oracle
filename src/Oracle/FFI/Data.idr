@@ -14,3 +14,8 @@ prim__dataDouble : AnyPtr -> PrimIO Double
 |||
 export %foreign "C:oracle_data_string,oracle-idris"
 prim__dataString : AnyPtr -> PrimIO String
+
+||| Extract Boolean value.
+|||
+export %foreign "C:oracle_data_bool,oracle-idris"
+prim__dataBool : AnyPtr -> PrimIO Int32

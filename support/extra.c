@@ -269,6 +269,14 @@ char *oracle_data_string(dpiData *data)
     return result;
 }
 
+int32_t oracle_data_bool(dpiData *data)
+{
+    if (!data)
+        return 0;
+
+    return data->value.asBoolean;
+}
+
 static int32_t oracle_bind_native(oracle_stmt *stmt, const char *name, dpiNativeTypeNum nativeType, dpiData *data)
 {
     int rc = dpiStmt_bindValueByName(
