@@ -250,3 +250,34 @@ test_QueryTypedPeople conn = do
           pure (Right ())
         rows' =>
           die "Unexpected decoded people."
+
+export covering
+test_QueryOneTyped : Connection -> IO (Either OracleError ())
+test_QueryOneTyped conn = do
+  result : Either OracleError (Maybe PersonRow) <-
+    resetDatabase conn >>==
+    \_ =>
+      queryOne
+        conn
+        """
+        SELECT
+            name,
+            age,
+            salary,
+            active,
+            notes,
+            hire_timestamp,
+            meeting_time_tz,
+            vacation_length,
+            uptime
+        FROM people
+        WHERE name = :name
+        """
+        [MkBindParameter ":name" (OracleString "Bob")]
+  case result of
+    Left err                                          =>
+      die (show err)
+    Right (Just (MkPersonRow "Bob" 42 _ _ _ _ _ _ _)) =>
+      pure (Right ())
+    Right value                                       =>
+      die "Expected Bob."

@@ -48,7 +48,8 @@ main = do
       test_QueryMultipleRows conn >>== \_ =>
       test_QueryAllRows conn >>== \_ =>
       test_QueryWithWhereClause conn >>== \_ =>
-      test_QueryTypedPeople conn
+      test_QueryTypedPeople conn >>== \_ =>
+      test_QueryOneTyped conn
   case result of
     Left err =>
       die (show err)
