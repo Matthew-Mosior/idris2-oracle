@@ -90,30 +90,6 @@ implementation FromOracle OracleIntervalDS where
         "FromOracle OracleIntervalDS"
         False
 
-implementation ToOracle String where
-  toOracle = OracleString
-
-implementation ToOracle ByteString where
-  toOracle = OracleBlob
-
-implementation ToOracle Double where
-  toOracle = OracleNumber
-
-implementation ToOracle Bool where
-  toOracle = OracleBool
-
-implementation ToOracle OracleTimestamp where
-  toOracle = OracleTimestamp
-
-implementation ToOracle OracleTimestampTZ where
-  toOracle = OracleTimestampTZ
-
-implementation ToOracle OracleIntervalYM where
-  toOracle = OracleIntervalYM
-
-implementation ToOracle OracleIntervalDS where
-  toOracle = OracleIntervalDS
-
 record PersonRow where
   constructor MkPersonRow
   name            : String
@@ -172,31 +148,31 @@ implementation ToRow PersonRow where
   toRow person =
     [ MkBindParameter
         ":name"
-        (toOracle person.name)
+        (OracleString person.name)
     , MkBindParameter
         ":age"
-        (toOracle person.age)
+        (OracleNumber person.age)
     , MkBindParameter
         ":salary"
-        (toOracle person.salary)
+        (OracleNumber person.salary)
     , MkBindParameter
         ":active"
-        (toOracle person.active)
+        (OracleBool person.active)
     , MkBindParameter
         ":notes"
-        (toOracle person.notes)
+        (OracleClob person.notes)
     , MkBindParameter
         ":hire_timestamp"
-        (toOracle person.hiretimestamp)
+        (OracleTimestamp person.hiretimestamp)
     , MkBindParameter
         ":meeting_time_tz"
-        (toOracle person.meetingtimetz)
+        (OracleTimestampTZ person.meetingtimetz)
     , MkBindParameter
         ":vacation_length"
-        (toOracle person.vacationlength)
+        (OracleIntervalYM person.vacationlength)
     , MkBindParameter
         ":uptime"
-        (toOracle person.uptime)
+        (OracleIntervalDS person.uptime)
     ]
 
 record BlobRow where
@@ -221,7 +197,7 @@ implementation ToRow BlobRow where
   toRow blob =
     [ MkBindParameter
         ":payload"
-        (toOracle blob.payload)
+        (OracleBlob blob.payload)
     ]
 
 export covering
@@ -252,18 +228,25 @@ test_QueryTypedPeople conn = do
       die (show err)
     Right rows =>
       case rows of
-        [ MkPersonRow "Alice" 30 90000 True "Alice Notes"
-            (MkOracleTimestamp 2022 5 10 9 15 30 123456789)
-            (MkOracleTimestampTZ 2025 7 1 10 45 30 987654321 (-5) 0)
-            (MkOracleIntervalYM 2 6)
-            (MkOracleIntervalDS 12 8 15 42 555000000)
-        , MkPersonRow "Bob" 42 120000 False "Bob Notes"
-            (MkOracleTimestamp 2015 1 8 16 45 1 42)
-            (MkOracleTimestampTZ 2024 12 31 23 59 59 999999999 1 30)
-            (MkOracleIntervalYM 15 3)
-            (MkOracleIntervalDS 365 23 59 59 999999999)
-        ] =>
+        [ MkPersonRow "Alice"
+                      30
+                      90000
+                      True
+                      "Alice Notes"
+                      (MkOracleTimestamp 2022 5 10 9 15 30 123457000)
+                      (MkOracleTimestampTZ 2025 7 1 10 45 30 987654000 (-5) 0)
+                      (MkOracleIntervalYM 2 6)
+                      (MkOracleIntervalDS 12 8 15 42 555000000)
+        , MkPersonRow "Bob"
+                      42
+                      120000
+                      False
+                      "Bob Notes"
+                      (MkOracleTimestamp 2015 1 8 16 45 1 0)
+                      (MkOracleTimestampTZ 2025 1 1 0 0 0 0 (-5) 0)
+                      (MkOracleIntervalYM 15 3)
+                      (MkOracleIntervalDS 365 23 59 59 999999999)
+        ]     =>
           pure (Right ())
-        rows' => do
-          putStrLn $ show rows'
+        rows' =>
           die "Unexpected decoded people."
