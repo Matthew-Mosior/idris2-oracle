@@ -1,10 +1,13 @@
 module TypedEncodingDecodingTests
 
 import Data.ByteString
+import Derive.Prelude
 import Oracle
 import Oracle.Types.DateTime
 import System
 import Utils
+
+%language ElabReflection
 
 implementation FromOracle String where
   fromOracle (OracleString s) = Right s
@@ -123,6 +126,8 @@ record PersonRow where
   vacationlength  : OracleIntervalYM
   uptime          : OracleIntervalDS
 
+%runElab derive "PersonRow" [Eq,Ord,Show]
+
 implementation FromRow PersonRow where
   fromRow
     [ name
@@ -198,6 +203,8 @@ record BlobRow where
   constructor MkBlobRow
   payload : ByteString
 
+%runElab derive "BlobRow" [Eq,Ord,Show]
+
 implementation FromRow BlobRow where
   fromRow [payload] = do
     payload' <- fromOracle payload
@@ -257,5 +264,6 @@ test_QueryTypedPeople conn = do
             (MkOracleIntervalDS 365 23 59 59 999999999)
         ] =>
           pure (Right ())
-        _ =>
+        rows' => do
+          putStrLn $ show rows'
           die "Unexpected decoded people."

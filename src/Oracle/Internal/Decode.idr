@@ -139,7 +139,6 @@ decodeColumn stmt column = do
                           pure (Left lasterr)
                         False => do
                           bytes <- primIO (prim__lobRead lob 1 size)
-                          primIO (prim__lobFreeBuffer bytes)
                           pure (Right $ OracleBlob $ fromString bytes)
                 OracleTypeClob        => do
                   lob <- primIO (prim__dataLob dataptr)
@@ -149,15 +148,22 @@ decodeColumn stmt column = do
                       pure (Left lasterr)
                     False => do
                       text <- primIO (prim__clobRead lob)
-                      primIO (prim__lobFreeBuffer text)
                       pure (Right $ OracleClob text)
                 OracleTypeBoolean     => do
                   b <- primIO (prim__dataBool dataptr)
                   case b of
                     0 =>
-                      pure (Right $ OracleBool False) 
+                      pure (Right $ OracleBool False)
                     1 =>
                       pure (Right $ OracleBool True)
+                    n =>
+                      pure $
+                        Left $
+                          MkOracleError
+                            (-1)
+                            "Unsupported BOOLEAN: \{show n}"
+                            "decodeColumn"
+                            False
                 OracleTypeUnknown n   =>
                   pure $
                     Left $

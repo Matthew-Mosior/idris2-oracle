@@ -51,8 +51,3 @@ prim__clobRead : AnyPtr -> PrimIO String
 |||
 export %foreign "C:oracle_lob_release,oracle-idris"
 prim__lobRelease : AnyPtr -> PrimIO ()
-
-||| Release memory returned by LOB reads.
-|||
-export %foreign "C:oracle_lob_free_buffer,oracle-idris"
-prim__lobFreeBuffer : String -> PrimIO ()
