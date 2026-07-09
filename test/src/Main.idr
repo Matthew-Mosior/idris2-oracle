@@ -54,7 +54,7 @@ main = do
       test_QueryExactlyOneTyped conn >>== \_ =>
       test_QueryExactlyOneMissing conn >>== \_ =>
       test_QueryExactlyOneMultiple conn >>== \_ =>
-      test_QueryTypedBlob conn
+      test_QueryTypedBlobs conn
   case result of
     Left err =>
       die (show err)

@@ -270,6 +270,25 @@ seedBlobs conn =
     """
     [ MkBindParameter
         ":payload"
+        (OracleBlob (pack [0x46, 0x46]))
+    ]
+  >>== \_ =>
+  execute_
+    conn
+    """
+    INSERT INTO blobs
+    (
+        id,
+        payload
+    )
+    VALUES
+    (
+        blobs_seq.NEXTVAL,
+        :payload
+    )
+    """
+    [ MkBindParameter
+        ":payload"
         (OracleBlob (fromString "FF"))
     ]
 

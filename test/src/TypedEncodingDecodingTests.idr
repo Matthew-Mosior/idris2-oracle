@@ -246,9 +246,9 @@ test_QueryTypedPeople conn = do
                       (MkOracleTimestampTZ 2025 1 1 0 0 0 0 (-5) 0)
                       (MkOracleIntervalYM 15 3)
                       (MkOracleIntervalDS 365 23 59 59 999999999)
-        ]     =>
+        ] =>
           pure (Right ())
-        rows' =>
+        _ =>
           die "Unexpected decoded people."
 
 export covering
@@ -402,24 +402,27 @@ test_QueryExactlyOneMultiple conn = do
       die "Expected multiple-row failure."
 
 export covering
-test_QueryTypedBlob : Connection -> IO (Either OracleError ())
-test_QueryTypedBlob conn = do
-  result : Either OracleError BlobsRow <-
+test_QueryTypedBlobs : Connection -> IO (Either OracleError ())
+test_QueryTypedBlobs conn = do
+  result : Either OracleError (List BlobsRow) <-
     resetDatabase conn >>==
     \_ =>
-      queryExactlyOne
+      query_
         conn
         """
         SELECT payload
         FROM blobs
+        ORDER BY id
         """
         []
   case result of
-    Right (MkBlobsRow bytes) => do
-      case bytes == fromString "FF" of
+    Left err   =>
+      die (show err)
+    Right rows =>
+      case rows == [ MkBlobsRow (fromString "FF")
+                   , MkBlobsRow (fromString "FF")
+                   ] of
         True  =>
           pure (Right ())
-        False =>
-          die "Unexpected blob."
-    Left err                =>
-      die (show err)
+        False => 
+          die "Unexpected blobs."
