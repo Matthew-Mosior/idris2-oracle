@@ -49,7 +49,12 @@ main = do
       test_QueryAllRows conn >>== \_ =>
       test_QueryWithWhereClause conn >>== \_ =>
       test_QueryTypedPeople conn >>== \_ =>
-      test_QueryOneTyped conn
+      test_QueryOneTyped conn >>== \_ =>
+      test_QueryOneMissing conn >>== \_ =>
+      test_QueryExactlyOneTyped conn >>== \_ =>
+      test_QueryExactlyOneMissing conn >>== \_ =>
+      test_QueryExactlyOneMultiple conn >>== \_ =>
+      test_QueryTypedBlob conn
   case result of
     Left err =>
       die (show err)

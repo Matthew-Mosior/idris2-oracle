@@ -175,25 +175,25 @@ implementation ToRow PersonRow where
         (OracleIntervalDS person.uptime)
     ]
 
-record BlobRow where
-  constructor MkBlobRow
+record BlobsRow where
+  constructor MkBlobsRow
   payload : ByteString
 
-%runElab derive "BlobRow" [Eq,Ord,Show]
+%runElab derive "BlobsRow" [Eq,Ord,Show]
 
-implementation FromRow BlobRow where
+implementation FromRow BlobsRow where
   fromRow [payload] = do
     payload' <- fromOracle payload
-    pure (MkBlobRow payload')
+    pure (MkBlobsRow payload')
   fromRow row       =
     Left $
       MkOracleError
         (-1)
         ("Unexpected BLOB row: " ++ show row)
-        "BlobRow.fromRow"
+        "BlobsRow.fromRow"
         False
 
-implementation ToRow BlobRow where
+implementation ToRow BlobsRow where
   toRow blob =
     [ MkBindParameter
         ":payload"
@@ -281,3 +281,145 @@ test_QueryOneTyped conn = do
       pure (Right ())
     Right value                                       =>
       die "Expected Bob."
+
+export covering
+test_QueryOneMissing : Connection -> IO (Either OracleError ())
+test_QueryOneMissing conn = do
+  result : Either OracleError (Maybe PersonRow) <-
+    resetDatabase conn >>==
+    \_ =>
+      queryOne
+        conn
+        """
+        SELECT
+            name,
+            age,
+            salary,
+            active,
+            notes,
+            hire_timestamp,
+            meeting_time_tz,
+            vacation_length,
+            uptime
+        FROM people
+        WHERE name = :name
+        """
+        [MkBindParameter ":name" (OracleString "Nobody")]
+  case result of
+    Right Nothing =>
+      pure (Right ())
+    Right _       =>
+      die "Expected Nothing."
+    Left err      =>
+      die (show err)
+
+export covering
+test_QueryExactlyOneTyped : Connection -> IO (Either OracleError ())
+test_QueryExactlyOneTyped conn = do
+  result : Either OracleError PersonRow <-
+    resetDatabase conn >>==
+    \_ =>
+      queryExactlyOne
+        conn
+        """
+        SELECT
+            name,
+            age,
+            salary,
+            active,
+            notes,
+            hire_timestamp,
+            meeting_time_tz,
+            vacation_length,
+            uptime
+        FROM people
+        WHERE name = :name
+        """
+        [MkBindParameter ":name" (OracleString "Alice")]
+  case result of
+    Right (MkPersonRow "Alice" 30 _ _ _ _ _ _ _) =>
+      pure (Right ())
+    Right _                                      =>
+      die "Unexpected row."
+    Left err =>
+      die (show err)
+
+export covering
+test_QueryExactlyOneMissing : Connection -> IO (Either OracleError ())
+test_QueryExactlyOneMissing conn = do
+  result : Either OracleError PersonRow <-
+    resetDatabase conn >>==
+    \_ =>
+      queryExactlyOne
+        conn
+        """
+        SELECT
+            name,
+            age,
+            salary,
+            active,
+            notes,
+            hire_timestamp,
+            meeting_time_tz,
+            vacation_length,
+            uptime
+        FROM people
+        WHERE name = :name
+        """
+        [MkBindParameter ":name" (OracleString "Nobody")]
+  case result of
+    Left _  =>
+      pure (Right ())
+    Right _ =>
+      die "Expected failure."
+
+export covering
+test_QueryExactlyOneMultiple : Connection -> IO (Either OracleError ())
+test_QueryExactlyOneMultiple conn = do
+  result : Either OracleError PersonRow <-
+    resetDatabase conn >>==
+    \_ =>
+      queryExactlyOne
+        conn
+        """
+        SELECT
+            name,
+            age,
+            salary,
+            active,
+            notes,
+            hire_timestamp,
+            meeting_time_tz,
+            vacation_length,
+            uptime
+        FROM people
+        """
+        []
+  case result of
+    Left _  =>
+      pure (Right ())
+    Right _ =>
+      die "Expected multiple-row failure."
+
+export covering
+test_QueryTypedBlob : Connection -> IO (Either OracleError ())
+test_QueryTypedBlob conn = do
+  result : Either OracleError BlobsRow <-
+    resetDatabase conn >>==
+    \_ =>
+      queryExactlyOne
+        conn
+        """
+        SELECT payload
+        FROM blobs
+        """
+        []
+  case result of
+    Right (MkBlobsRow bytes) => do
+      case bytes == fromString "FF" of
+        True  =>
+          pure (Right ())
+        False =>
+          die "Unexpected blob."
+    Left err                =>
+      die (show err)

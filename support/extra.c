@@ -642,23 +642,25 @@ int64_t oracle_lob_size(dpiLob *lob)
 char *oracle_lob_read(dpiLob *lob, int64_t offset, int64_t length)
 {
     uint64_t actual;
-    char *buffer;
+    unsigned char *buffer;
+    char *hex;
+    static const char digits[] = "0123456789ABCDEF";
 
     if (!lob)
         return NULL;
 
-    buffer = malloc(length + 1);
+    buffer = malloc(length);
 
     if (!buffer)
         return NULL;
 
-    actual = 0;
+    actual = (uint64_t) length;
 
     if (dpiLob_readBytes(
             lob,
             offset,
             length,
-            buffer,
+            (char *) buffer,
             &actual) < 0)
     {
         oracle_capture_last_error();
@@ -666,9 +668,23 @@ char *oracle_lob_read(dpiLob *lob, int64_t offset, int64_t length)
         return NULL;
     }
 
-    buffer[actual] = '\0';
+    hex = malloc(actual * 2 + 1);
 
-    return buffer;
+    if (!hex) {
+        free(buffer);
+        return NULL;
+    }
+
+    for (uint64_t i = 0; i < actual; i++) {
+        hex[i * 2]     = digits[(buffer[i] >> 4) & 0xF];
+        hex[i * 2 + 1] = digits[buffer[i] & 0xF];
+    }
+
+    hex[actual * 2] = '\0';
+
+    free(buffer);
+
+    return hex;
 }
 
 void oracle_lob_release(dpiLob *lob)

@@ -57,7 +57,7 @@ decodeColumn stmt column = do
     Left err   =>
       pure (Left err)
     Right info => do
-      dataptr    <- primIO (prim__columnValue stmt column)
+      dataptr <- primIO (prim__columnValue stmt column)
       case prim__nullAnyPtr dataptr == 1 of
         True => do
           lasterr <- getLastError
