@@ -419,7 +419,7 @@ test_QueryTypedBlobs conn = do
     Left err   =>
       die (show err)
     Right rows =>
-      case rows == [ MkBlobsRow (fromString "FF")
+      case rows == [ MkBlobsRow (pack [0x46, 0x46])
                    , MkBlobsRow (fromString "FF")
                    ] of
         True  =>
