@@ -126,29 +126,27 @@ decodeColumn stmt column = do
                           !(primIO (prim__intervalDSSeconds iv))
                           !(primIO (prim__intervalDSNanoseconds iv))
                 OracleTypeBlob        => do
-                  lob <- primIO (prim__dataLob dataptr)
-                  case prim__nullAnyPtr lob == 1 of
-                    True  => do
-                      lasterr <- getLastError
-                      pure (Left lasterr)
-                    False => do
-                      size <- primIO (prim__lobSize lob)
-                      case size < 0 of
-                        True  => do
-                          lasterr <- getLastError
-                          pure (Left lasterr)
-                        False => do
-                          bytes <- primIO (prim__lobRead lob 1 size)
-                          pure (Right $ OracleBlob $ fromString bytes)
+                  result <- runElinIO (withLob dataptr OracleTypeBlob) 
+                  case result of
+                    Right value =>
+                      case value of
+                        Left err     =>
+                          pure (Left err)
+                        Right value' =>
+                          pure (Right value')
+                    Left err    =>
+                      assert_total $ idris_crash "Data.Oracle.Internal.Decode.decodeColumn: \{show err}"
                 OracleTypeClob        => do
-                  lob <- primIO (prim__dataLob dataptr)
-                  case prim__nullAnyPtr lob == 1 of
-                    True  => do
-                      lasterr <- getLastError
-                      pure (Left lasterr)
-                    False => do
-                      text <- primIO (prim__clobRead lob)
-                      pure (Right $ OracleClob text)
+                  result <- runElinIO (withLob dataptr OracleTypeClob) 
+                  case result of
+                    Right value =>
+                      case value of
+                        Left err     =>
+                          pure (Left err)
+                        Right value' =>
+                          pure (Right value')
+                    Left err    =>
+                      assert_total $ idris_crash "Data.Oracle.Internal.Decode.decodeColumn: \{show err}"
                 OracleTypeBoolean     => do
                   b <- primIO (prim__dataBool dataptr)
                   case b of
@@ -172,3 +170,51 @@ decodeColumn stmt column = do
                         ("Unsupported Oracle type: " ++ show n)
                         "decodeColumn"
                         False
+  where
+    acquire : AnyPtr -> F1 World AnyPtr
+    acquire dataptr =
+      ioToF1 (primIO (prim__dataLob dataptr))
+    use : AnyPtr -> OracleType -> F1 World (Either OracleError OracleValue)
+    use lob oracletype =
+      case oracletype of
+        OracleTypeBlob =>
+          ioToF1 ( do case prim__nullAnyPtr lob == 1 of
+                        True  => do
+                          lasterr <- getLastError
+                          pure (Left lasterr)
+                        False => do
+                          size <- primIO (prim__lobSize lob)
+                          case size < 0 of
+                            True  => do
+                              lasterr <- getLastError
+                              pure (Left lasterr)
+                            False => do
+                              bytes <- primIO (prim__lobRead lob 1 size)
+                              pure (Right $ OracleBlob $ fromString bytes)
+                 )
+        OracleTypeClob =>
+          ioToF1 ( do case prim__nullAnyPtr lob == 1 of
+                        True  => do
+                          lasterr <- getLastError
+                          pure (Left lasterr)
+                        False => do
+                          text <- primIO (prim__clobRead lob)
+                          pure (Right $ OracleClob text)
+                 )
+        ty             =>
+          ioToF1 ( pure $
+                     Left $
+                       MkOracleError
+                         (-1)
+                         "Unsupported type: \{show ty}"
+                         "decodeColumn"
+                         False
+                 )
+    release : AnyPtr -> F1' World
+    release lob =
+      ioToF1 (primIO (prim__lobRelease lob))
+    withLob : AnyPtr -> OracleType -> Elin World [] (Either OracleError OracleValue)
+    withLob dataptr oracletype =
+      bracket (runIO (acquire dataptr))
+              (\lob => runIO (use lob oracletype))
+              (\lob => runIO (release lob))
