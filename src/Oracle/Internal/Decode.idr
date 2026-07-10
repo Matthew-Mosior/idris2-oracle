@@ -126,7 +126,7 @@ decodeColumn stmt column = do
                           !(primIO (prim__intervalDSSeconds iv))
                           !(primIO (prim__intervalDSNanoseconds iv))
                 OracleTypeBlob        => do
-                  result <- runElinIO (withLob dataptr OracleTypeBlob) 
+                  result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeBlob) 
                   case result of
                     Right value =>
                       case value of
@@ -137,7 +137,7 @@ decodeColumn stmt column = do
                     Left err    =>
                       assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
                 OracleTypeClob        => do
-                  result <- runElinIO (withLob dataptr OracleTypeClob) 
+                  result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeClob) 
                   case result of
                     Right value =>
                       case value of
@@ -213,8 +213,8 @@ decodeColumn stmt column = do
     release : AnyPtr -> F1' World
     release lob =
       ioToF1 (primIO (prim__lobRelease lob))
-    withLob : AnyPtr -> OracleType -> Elin World [] (Either OracleError OracleValue)
-    withLob dataptr oracletype =
+    withDataPtrAndOracleType : AnyPtr -> OracleType -> Elin World [] (Either OracleError OracleValue)
+    withDataPtrAndOracleType dataptr oracletype =
       bracket (runIO (acquire dataptr))
               (\lob => runIO (use lob oracletype))
               (\lob => runIO (release lob))

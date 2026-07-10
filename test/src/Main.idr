@@ -7,6 +7,7 @@ import Oracle
 import QueryTests
 import StatementTests
 import System
+import TransactionTests
 import TypedEncodingDecodingTests
 import Utils
 
@@ -54,7 +55,8 @@ main = do
       test_QueryExactlyOneTyped conn >>== \_ =>
       test_QueryExactlyOneMissing conn >>== \_ =>
       test_QueryExactlyOneMultiple conn >>== \_ =>
-      test_QueryTypedBlobs conn
+      test_QueryTypedBlobs conn >>== \_ =>
+      test_CommitPersistsChanges conn
   case result of
     Left err =>
       die (show err)
