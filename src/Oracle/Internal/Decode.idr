@@ -135,7 +135,7 @@ decodeColumn stmt column = do
                         Right value' =>
                           pure (Right value')
                     Left err    =>
-                      assert_total $ idris_crash "Data.Oracle.Internal.Decode.decodeColumn: \{show err}"
+                      assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
                 OracleTypeClob        => do
                   result <- runElinIO (withLob dataptr OracleTypeClob) 
                   case result of
@@ -146,7 +146,7 @@ decodeColumn stmt column = do
                         Right value' =>
                           pure (Right value')
                     Left err    =>
-                      assert_total $ idris_crash "Data.Oracle.Internal.Decode.decodeColumn: \{show err}"
+                      assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
                 OracleTypeBoolean     => do
                   b <- primIO (prim__dataBool dataptr)
                   case b of
@@ -160,7 +160,7 @@ decodeColumn stmt column = do
                           MkOracleError
                             (-1)
                             "Unsupported BOOLEAN: \{show n}"
-                            "decodeColumn"
+                            "Oracle.Internal.Decode.decodeColumn"
                             False
                 OracleTypeUnknown n   =>
                   pure $
@@ -168,7 +168,7 @@ decodeColumn stmt column = do
                       MkOracleError
                         (-1)
                         ("Unsupported Oracle type: " ++ show n)
-                        "decodeColumn"
+                        "Oracle.Internal.Decode.decodeColumn"
                         False
   where
     acquire : AnyPtr -> F1 World AnyPtr
@@ -207,7 +207,7 @@ decodeColumn stmt column = do
                        MkOracleError
                          (-1)
                          "Unsupported type: \{show ty}"
-                         "decodeColumn"
+                         "Oracle.Internal.Decode.decodeColumn.use"
                          False
                  )
     release : AnyPtr -> F1' World

@@ -186,7 +186,7 @@ queryExactlyOne conn sql params = do
           MkOracleError
             (-1)
             "Expected exactly one row but query returned no rows"
-            "queryExactlyOne"
+            "Oracle.Query.queryExactlyOne"
             False
     Right [value]       =>
       pure (Right value)
@@ -196,7 +196,7 @@ queryExactlyOne conn sql params = do
           MkOracleError
             (-1)
             "Expected exactly one row but query returned multiple rows"
-            "queryExactlyOne"
+            "Oracle.Query.queryExactlyOne"
             False
 
 --------------------------------------------------------------------------------
