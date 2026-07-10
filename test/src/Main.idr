@@ -56,7 +56,14 @@ main = do
       test_QueryExactlyOneMissing conn >>== \_ =>
       test_QueryExactlyOneMultiple conn >>== \_ =>
       test_QueryTypedBlobs conn >>== \_ =>
-      test_CommitPersistsChanges conn
+      test_CommitPersistsChanges conn >>== \_ =>
+      test_RollbackDiscardsChanges conn >>== \_ =>
+      test_CommitPersistsUpdate conn >>== \_ =>
+      test_RollbackDiscardsUpdate conn >>== \_ =>
+      test_CommitPersistsDelete conn >>== \_ =>
+      test_RollbackRestoresDelete conn >>== \_ =>
+      test_CommitMultipleStatements conn >>== \_ =>
+      test_RollbackMultipleStatements conn
   case result of
     Left err =>
       die (show err)
