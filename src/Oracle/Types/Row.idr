@@ -20,8 +20,7 @@ import Oracle.Types.Value
 ||| - `OracleIntervalYM`
 ||| - `OracleIntervalDS`
 |||
-||| This interface intentionally does **not** perform any row-level decoding.
-||| That responsibility belongs to `FromRow`.
+||| This interface intentionally does not perform any row-level decoding, as that responsibility belongs to `FromRow`.
 |||
 ||| Example:
 |||
