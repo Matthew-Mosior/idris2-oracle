@@ -1,7 +1,7 @@
 package oracle
 
 authors    = "Matthew Mosior"
-brief      = "Oracle support via ODPI-C bindings for Idris2 programs compiled with the Chez scheme backend."
+brief      = "Idris2 bindings to the Oracle ODPI-C API"
 license    = "BSD-3 Clause"
 version    = 0.1.0
 sourcedir  = "src"
