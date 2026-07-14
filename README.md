@@ -730,7 +730,7 @@ Rollback --> Open
 
 Oracle transactions are controlled explicitly through the `Connection`.
 
-The library exposes the three standard transaction operations:
+The library exposes the two standard transaction operations:
 
 - `commit`
 - `rollback`
