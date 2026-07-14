@@ -4,11 +4,11 @@ This library provides a modern Oracle Database client library for Idris2 built o
 
 ## Introduction
 
-`idris2-oracle` is a high-level Idris2 interface to Oracle Database built on top of Oracle's official **ODPI-C** library.
+This library is a high-level Idris2 interface to Oracle Database built on top of Oracle's official **ODPI-C** library.
 
 The library provides low-level FFI bindings to the complete ODPI-C API together with a type-safe, idiomatic Idris2 interface for preparing statements, binding parameters, executing queries, managing transactions, working with LOBs, and decoding results into ordinary Idris records.
 
-Unlike traditional database bindings that expose raw pointers and manual resource management, `idris2-oracle` uses Idris2's type system together with linear resource management to ensure that database resources are acquired and released safely while presenting a pleasant functional API.
+Unlike traditional database bindings that expose raw pointers and manual resource management, this library uses Idris2's type system together with linear resource management to ensure that database resources are acquired and released safely while presenting a pleasant functional API.
 
 ## Features
 
@@ -72,7 +72,7 @@ Current capabilities include:
     -   Typed decoding tests
     -   Transaction tests
 
-## Why `idris2-oracle`?
+## Why use this library?
 
 Most Oracle client libraries fall into one of two categories:
 - Thin C bindings that expose Oracle's underlying APIs almost directly. While these provide maximum flexibility, they also require callers to manually manage statements, buffers, LOB locators, and other native resources. Small mistakes can easily lead to memory leaks or invalid resource usage.
@@ -106,7 +106,7 @@ F
     --> G[(Oracle Database)]
 ```
 
-This library is built as a small Idris2 layer on top of Oracle’s ODPI-C library. ODPI-C provides the low-level bridge to Oracle Client libraries and the database itself, while `idris2-oracle` adds a type-safe Idris2 API for connections, statements, transactions, parameter binding, row decoding, and LOB handling.
+This library is built as a small Idris2 layer on top of Oracle’s ODPI-C library. ODPI-C provides the low-level bridge to Oracle Client libraries and the database itself, while this library adds a type-safe Idris2 API for connections, statements, transactions, parameter binding, row decoding, and LOB handling.
 
 At the highest level, applications work with ordinary Idris2 values and records. Those values are translated into `OracleValue`s and bind parameters, and query results are translated back through `FromOracle` and `FromRow` instances.
 
@@ -312,7 +312,7 @@ case result of
 
 Although `execute_` is convenient, Oracle performs best when SQL statements are prepared once and reused.
 
-`idris2-oracle` exposes prepared statements through the `Statement` type.
+This library exposes prepared statements through the `Statement` type.
 
 Like `withConnection`, `withStatement` (the recommended way to create a statement) automatically manages the lifetime of the underlying Oracle resource.
 
@@ -897,7 +897,7 @@ Applications therefore interact with strongly typed Idris values instead of pars
 
 ## Error Handling
 
-Unlike many database libraries, `idris2-oracle` does not throw exceptions for ordinary database failures.
+Unlike many database libraries, this library does not throw exceptions for ordinary database failures.
 
 Instead, every database operation explicitly returns either a successful result or an `OracleError`.
 
