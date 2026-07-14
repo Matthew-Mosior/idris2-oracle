@@ -2,14 +2,6 @@
 
 This library provides a modern Oracle Database client library for Idris2 built on top of Oracle's [ODPI-C API](https://github.com/oracle/odpi). It combines a low-level FFI with a high-level, type-safe API supporting prepared statements, transactions, typed row decoding, LOBs, and Oracle-native data types, allowing Idris2 applications to interact with Oracle databases safely and efficiently.
 
-## Introduction
-
-This library is a high-level Idris2 interface to Oracle Database built on top of Oracle's official **ODPI-C** library.
-
-The library provides low-level FFI bindings to the complete ODPI-C API together with a type-safe, idiomatic Idris2 interface for preparing statements, binding parameters, executing queries, managing transactions, working with LOBs, and decoding results into ordinary Idris records.
-
-Unlike traditional database bindings that expose raw pointers and manual resource management, this library uses Idris2's type system together with linear resource management to ensure that database resources are acquired and released safely while presenting a pleasant functional API.
-
 ## Features
 
 Current capabilities include:
