@@ -4,7 +4,6 @@ This library provides a modern Oracle Database client library for Idris2 built o
 
 ## Features
 
-Current capabilities include:
 -   **Complete Oracle connectivity**
     -   Connect and disconnect from Oracle databases
     -   Transaction management
