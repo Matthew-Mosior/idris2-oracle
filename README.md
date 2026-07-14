@@ -146,7 +146,7 @@ Query-->>User: List a
 
 This library depends on Oracle’s ODPI-C layer, and ODPI-C in turn requires Oracle Client libraries at runtime. Oracle’s documentation states that these libraries can come from Oracle Instant Client, an Oracle Database installation, or a full Oracle Client installation. ODPI-C also loads the client library dynamically at runtime, so the application must be able to locate the Oracle Client shared libraries when it starts.
 
-Running `make install` to builds and installs the library.
+Running `make install` builds and installs the library.
 
 ## Connecting to Oracle
 
