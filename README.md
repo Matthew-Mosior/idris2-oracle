@@ -144,9 +144,9 @@ Query-->>User: List a
 
 ## Installation
 
-`idris2-oracle` depends on Oracle’s ODPI-C layer, and ODPI-C in turn requires Oracle Client libraries at runtime. Oracle’s documentation states that these libraries can come from Oracle Instant Client, an Oracle Database installation, or a full Oracle Client installation. ODPI-C also loads the client library dynamically at runtime, so the application must be able to locate the Oracle Client shared libraries when it starts.
+This library depends on Oracle’s ODPI-C layer, and ODPI-C in turn requires Oracle Client libraries at runtime. Oracle’s documentation states that these libraries can come from Oracle Instant Client, an Oracle Database installation, or a full Oracle Client installation. ODPI-C also loads the client library dynamically at runtime, so the application must be able to locate the Oracle Client shared libraries when it starts.
 
-Installation is managed via `make`, so it is as simple as running `make install` to build and install the library.
+Running `make install` to builds and installs the library.
 
 ## Connecting to Oracle
 
