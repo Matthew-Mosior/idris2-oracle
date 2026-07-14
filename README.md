@@ -1044,17 +1044,6 @@ Similarly, `ToRow` allows records to be converted into collections of bind param
 
 This separation keeps database-specific logic isolated from application code.
 
-## Low-level FFI
-
-The library intentionally exposes the underlying ODPI-C bindings.
-
-Advanced users can build additional abstractions on top of:
--   statements
--   query metadata
--   LOB APIs
--   connection pools
--   Oracle-specific features
-
 ## Testing
 
 This library includes a comprehensive integration test suite covering the major features of the library.
@@ -1070,14 +1059,10 @@ Current coverage includes:
 -   Transactions
 -   LOB handling
 -   Oracle error handling
-    
-## Running the test suite
 
-Running `make test` setups up the oracle database via docker, builds the test suite, and runs it.
+### Test database
 
-## Test database
-
-The integration tests utilize an actual Oracle database (via docker).
+The test suite utilizes an actual Oracle database (via docker).
 
 During testing the suite creates a small schema containing representative Oracle types, including:
 -   numeric values
@@ -1091,3 +1076,7 @@ During testing the suite creates a small schema containing representative Oracle
 Before each test the database is reset to a known state.
 
 This allows every test to run independently without relying on execution order.
+    
+### Running the test suite
+
+Running `make test` setups up the oracle database via docker, builds the test suite, and runs it.
