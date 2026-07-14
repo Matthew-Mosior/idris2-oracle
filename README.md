@@ -63,6 +63,7 @@ This library provides a modern Oracle Database client library for Idris2 built o
 ## Why use this library?
 
 Most Oracle client libraries fall into one of two categories:
+
 - Thin C bindings that expose Oracle's underlying APIs almost directly. While these provide maximum flexibility, they also require callers to manually manage statements, buffers, LOB locators, and other native resources. Small mistakes can easily lead to memory leaks or invalid resource usage.
 - Heavyweight object-relational frameworks that hide much of Oracle's functionality behind large abstraction layers. These often sacrifice transparency, make advanced Oracle features difficult to access, and provide little static verification of application logic.
 
@@ -251,13 +252,13 @@ Once connected, SQL statements can be executed with `execute_`.
 
 `execute_` is intended for SQL that does not return rows, including
 
--   `CREATE TABLE`    
--   `CREATE INDEX`    
--   `INSERT`    
--   `UPDATE`    
--   `DELETE`    
--   `ALTER`    
--   `DROP`    
+- `CREATE TABLE`
+- `CREATE INDEX`
+- `INSERT`
+- `UPDATE`
+- `DELETE`
+- `ALTER`
+- `DROP`
 
 For example:
 
@@ -358,10 +359,9 @@ Using `withStatement` guarantees that every prepared statement has a matching re
 
 This is the same design philosophy used throughout the library:
 
--   `withConnection`    
--   `withStatement`    
--   `withQueryInfo`
-    
+- `withConnection`
+- `withStatement`
+- `withQueryInfo`
 
 Each acquires a resource, executes user code, and guarantees cleanup.
 
@@ -371,11 +371,10 @@ Rather than constructing SQL strings manually, applications should bind values t
 
 Binding provides several advantages:
 
--   avoids SQL injection
--   improves statement reuse
--   avoids manual quoting
--   allows Oracle to optimize execution
-    
+- avoids SQL injection
+- improves statement reuse
+- avoids manual quoting
+- allows Oracle to optimize execution
 
 A bind parameter consists of a parameter name and an `OracleValue`.
 
@@ -422,17 +421,16 @@ The library automatically binds each parameter before executing the statement.
 
 The library currently supports binding:
 
--   `OracleNull`    
--   `OracleString`    
--   `OracleNumber`    
--   `OracleBool`    
--   `OracleClob`    
--   `OracleBlob`    
--   `OracleTimestamp`    
--   `OracleTimestampTZ`    
--   `OracleIntervalYM`    
--   `OracleIntervalDS`
-    
+- `OracleNull`
+- `OracleString`
+- `OracleNumber`
+- `OracleBool`
+- `OracleClob`
+- `OracleBlob`
+- `OracleTimestamp`
+- `OracleTimestampTZ`
+- `OracleIntervalYM`
+- `OracleIntervalDS`
 
 Additional Oracle types will be added over time as support is implemented.
 
@@ -538,12 +536,13 @@ G[Result]
 ```
 
 Internally this corresponds to:
-1.  Preparing the SQL statement
-2.  Binding parameters
-3.  Executing the statement
-4.  Fetching every row
-5.  Decoding Oracle values
-6.  Returning the result
+
+1. Preparing the SQL statement
+2. Binding parameters
+3. Executing the statement
+4. Fetching every row
+5. Decoding Oracle values
+6. Returning the result
 
 Because `queryRaw` uses `withStatement`, the prepared statement is released automatically before the function returns.
 
@@ -703,8 +702,9 @@ queryExactlyOne
 ```
 
 `queryExactlyOne` fails if:
--   No rows are returned
--   More than one row is returned
+
+- No rows are returned
+- More than one row is returned
 
 This eliminates an entire class of application-level checks.
 
@@ -730,8 +730,8 @@ Oracle transactions are controlled explicitly through the `Connection`.
 
 The library exposes the three standard transaction operations:
 
--   `commit`    
--   `rollback`
+- `commit`
+- `rollback`
 
 A typical transaction looks like
 
@@ -754,19 +754,21 @@ returns the database to its previous state.
 ## Why explicit transactions?
 
 Grouping several statements into one transaction provides:
--   atomicity
--   consistency
--   isolation
--   durability
+
+- atomicity
+- consistency
+- isolation
+- durability
 
 Transactions also reduces unnecessary commits, and is almost always preferable to committing after every statement.
 
 ## Working with LOBs
 
 Oracle supports two large-object types:
--   `CLOB`    
--   `BLOB`
-    
+
+- `CLOB`
+- `BLOB`
+
 These are represented as
 
 ```idris
@@ -883,6 +885,7 @@ C[FromOracle]
 D[Application record]
 
 ```
+
 The same mechanism works for every supported temporal type.
 
 Applications therefore interact with strongly typed Idris values instead of parsing date and interval strings manually.
@@ -928,10 +931,11 @@ record OracleError where
 ```
 
 An error contains information such as:
--   Oracle error number
--   Descriptive error message
--   The function where the fail originated from    
--   Whether the error originated from Oracle or the library
+
+- Oracle error number
+- Descriptive error message
+- The function where the fail originated from
+- Whether the error originated from Oracle or the library
 
 For example,
 
@@ -948,6 +952,7 @@ Most library functions return
 ```idris
 IO (Either OracleError a)
 ```
+
 This allows callers to propagate failures naturally.
 
 For example,
@@ -969,12 +974,13 @@ Most users will only need the high-level API presented throughout this tutorial.
 However, this library also exposes the underlying layers for applications requiring finer control over Oracle.
 
 These include:
--   Manual connection management
--   Prepared statement reuse
--   Raw query APIs
--   Low-level ODPI-C bindings   
--   Custom row decoding   
--   Custom parameter encoding
+
+- Manual connection management
+- Prepared statement reuse
+- Raw query APIs
+- Low-level ODPI-C bindings
+- Custom row decoding
+- Custom parameter encoding
 
 ## Manual connection management
 
@@ -987,10 +993,11 @@ withConnection
 There are situations where manually managing connections is appropriate.
 
 Examples include:
--   long-running servers
--   custom connection pools
--   embedded frameworks
--   interoperability with existing resource managers
+
+- long-running servers
+- custom connection pools
+- embedded frameworks
+- interoperability with existing resource managers
 
 The lower-level API consists of
 
@@ -1020,11 +1027,12 @@ queryRaw
 This allows applications to inspect Oracle values dynamically.
 
 This is useful for:
--   Generic SQL clients
--   Schema browsers
--   Migration tools
--   Interactive REPLs
-    
+
+- Generic SQL clients
+- Schema browsers
+- Migration tools
+- Interactive REPLs
+
 ## Custom decoding
 
 Every typed query is built from two interfaces:
@@ -1047,32 +1055,34 @@ This library includes a comprehensive integration test suite covering the major 
 The tests execute against a real Oracle database and verify both the high-level Idris2 API and the underlying ODPI-C bindings.
 
 Current coverage includes:
--   Connection management
--   Prepared statements
--   Parameter binding
--   Query execution
--   Typed row decoding
--   Transactions
--   LOB handling
--   Oracle error handling
+
+- Connection management
+- Prepared statements
+- Parameter binding
+- Query execution
+- Typed row decoding
+- Transactions
+- LOB handling
+- Oracle error handling
 
 ### Test database
 
 The test suite utilizes an actual Oracle database (via docker).
 
 During testing the suite creates a small schema containing representative Oracle types, including:
--   numeric values
--   strings
--   booleans
--   timestamps
--   intervals
--   CLOBs
--   BLOBs
+
+- numeric values
+- strings
+- booleans
+- timestamps
+- intervals
+- CLOBs
+- BLOBs
 
 Before each test the database is reset to a known state.
 
 This allows every test to run independently without relying on execution order.
-    
+
 ### Running the test suite
 
 Running `make test` setups up the oracle database via docker, builds the test suite, and runs it.
