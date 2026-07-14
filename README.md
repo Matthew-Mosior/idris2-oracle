@@ -4,16 +4,16 @@ This library provides a modern Oracle Database client library for Idris2 built o
 
 ## Features
 
--   **Complete Oracle connectivity**
+- **Complete Oracle connectivity**
     -   Connect and disconnect from Oracle databases
     -   Transaction management
     -   Automatic cleanup of database resources
--   **Prepared statements**
+- **Prepared statements**
     -   Prepare SQL once and execute multiple times
     -   Named parameter binding
     -   Automatic statement lifetime management
     -   Statement reuse
--   **Rich type support**
+- **Rich type support**
     -   `VARCHAR2`
     -   `NUMBER`
     -   `BOOLEAN`
@@ -23,39 +23,39 @@ This library provides a modern Oracle Database client library for Idris2 built o
     -   `TIMESTAMP WITH TIME ZONE`
     -   `INTERVAL YEAR TO MONTH`
     -   `INTERVAL DAY TO SECOND`
--   **Typed decoding**
+- **Typed decoding**
     -   Automatic conversion from Oracle values to Idris types via `FromOracle`
     -   Automatic row decoding via `FromRow`
     -   Typed query APIs returning user-defined records
--   **Type-safe parameter encoding**
+- **Type-safe parameter encoding**
     -   Automatic conversion to Oracle bind values via `ToOracle`
     -   Record encoding through `ToRow`
--   **LOB support**
+- **LOB support**
     -   Read and write `CLOB`
     -   Read and write `BLOB`
     -   Automatic LOB resource management
--   **Transaction support**
+- **Transaction support**
     -   Commit
     -   Rollback
     -   Explicit transaction boundaries
     -   ACID-compliant operations
--   **Error handling**
+- **Error handling**
     -   Oracle errors are represented as ordinary Idris values
     -   Rich diagnostic information
     -   No exceptions required
--   **Resource safety**
+- **Resource safety**
     -   Automatic release of
         -   statements
         -   query metadata
         -   temporary buffers
         -   LOB handles
     -   Bracket-style APIs throughout (via `idris2-elin`)
--   **High-level query interface**
+- **High-level query interface**
     -   Raw queries returning `OracleValue`
     -   Typed queries returning Idris records
     -   Single-row queries
     -   Exactly-one-row queries
--   **Comprehensive test suite**
+- **Comprehensive test suite**
     -   Connection tests
     -   Statement tests
     -   Parameter binding tests
