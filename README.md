@@ -1073,11 +1073,7 @@ Current coverage includes:
     
 ## Running the test suite
 
-The project provides a single command for building and executing every integration test.
-
-```bash
-make test
-```
+Running `make test` setups up the oracle database via docker, builds the test suite, and runs it.
 
 ## Test database
 
