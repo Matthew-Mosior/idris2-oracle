@@ -1,5 +1,0 @@
-[custom.all.oracle]
-type = "local"
-path = "."
-ipkg = "oracle.ipkg"
-test = "test/test.ipkg"
