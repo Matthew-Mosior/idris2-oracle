@@ -40,7 +40,6 @@ This library provides a modern Oracle Database client library for Idris2 built o
 - **Error handling**
   - Oracle errors are represented as ordinary Idris values
   - Rich diagnostic information
-  - No exceptions required
 - **Resource safety**
   - Automatic release of
       - statements
