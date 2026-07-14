@@ -64,7 +64,7 @@ Current capabilities include:
     -   Typed queries returning Idris records
     -   Single-row queries
     -   Exactly-one-row queries
--   **Comprehensive integration test suite**
+-   **Comprehensive test suite**
     -   Connection tests
     -   Statement tests
     -   Parameter binding tests
