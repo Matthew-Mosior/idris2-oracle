@@ -42,10 +42,10 @@ This library provides a modern Oracle Database client library for Idris2 built o
   - Rich diagnostic information
 - **Resource safety**
   - Automatic release of
-      - statements
-      - query metadata
-      - temporary buffers
-      - LOB handles
+    - statements
+    - query metadata
+    - temporary buffers
+    - LOB handles
   - Bracket-style APIs throughout (via `idris2-elin`)
 - **High-level query interface**
   - Raw queries returning `OracleValue`
