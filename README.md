@@ -255,7 +255,7 @@ This is occasionally useful for long-running services, but most applications sho
 
 Once connected, SQL statements can be executed with `execute_`.
 
-`execute_` is intended for SQL that does not return rows, including
+`execute_` is intended for SQL that does not return rows, including:
 
 - `CREATE TABLE`
 - `CREATE INDEX`
@@ -281,13 +281,11 @@ withConnection connectInfo $ \conn =>
     []
 ```
 
-Every execution returns
+Every execution returns:
 
 ```idris
 Either OracleError ()
 ```
-
-making success and failure explicit.
 
 Most database operations therefore follow the same pattern:
 
