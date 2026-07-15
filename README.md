@@ -287,7 +287,7 @@ Every execution returns:
 Either OracleError ()
 ```
 
-Most database operations therefore follow the same pattern:
+Most database operations therefore follow the pattern:
 
 ```idris
 result <-
