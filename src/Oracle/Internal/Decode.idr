@@ -147,6 +147,17 @@ decodeColumn stmt column = do
                           pure (Right value')
                     Left err    =>
                       assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
+                OracleTypeJSON        => do
+                  result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeJSON) 
+                  case result of
+                    Right value =>
+                      case value of
+                        Left err     =>
+                          pure (Left err)
+                        Right value' =>
+                          pure (Right value')
+                    Left err    =>
+                      assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
                 OracleTypeBoolean     => do
                   b <- primIO (prim__dataBool dataptr)
                   case b of
@@ -175,31 +186,40 @@ decodeColumn stmt column = do
     acquire dataptr =
       ioToF1 (primIO (prim__dataLob dataptr))
     use : AnyPtr -> OracleType -> F1 World (Either OracleError OracleValue)
-    use lob oracletype =
+    use ptr oracletype =
       case oracletype of
         OracleTypeBlob =>
-          ioToF1 ( do case prim__nullAnyPtr lob == 1 of
+          ioToF1 ( do case prim__nullAnyPtr ptr == 1 of
                         True  => do
                           lasterr <- getLastError
                           pure (Left lasterr)
                         False => do
-                          size <- primIO (prim__lobSize lob)
+                          size <- primIO (prim__lobSize ptr)
                           case size < 0 of
                             True  => do
                               lasterr <- getLastError
                               pure (Left lasterr)
                             False => do
-                              bytes <- primIO (prim__lobRead lob 1 size)
+                              bytes <- primIO (prim__lobRead ptr 1 size)
                               pure (Right $ OracleBlob $ fromString bytes)
                  )
         OracleTypeClob =>
-          ioToF1 ( do case prim__nullAnyPtr lob == 1 of
+          ioToF1 ( do case prim__nullAnyPtr ptr == 1 of
                         True  => do
                           lasterr <- getLastError
                           pure (Left lasterr)
                         False => do
-                          text <- primIO (prim__clobRead lob)
+                          text <- primIO (prim__clobRead ptr)
                           pure (Right $ OracleClob text)
+                 )
+        OracleTypeJSON =>
+          ioToF1 ( do case prim__nullAnyPtr ptr == 1 of
+                        True  => do
+                          lasterr <- getLastError
+                          pure (Left lasterr)
+                        False => do
+                          text <- primIO (prim__clobRead ptr)
+                          pure (Right $ OracleJSON text) 
                  )
         ty             =>
           ioToF1 ( pure $
@@ -210,11 +230,19 @@ decodeColumn stmt column = do
                          "Oracle.Internal.Decode.decodeColumn.use"
                          False
                  )
-    release : AnyPtr -> F1' World
-    release lob =
-      ioToF1 (primIO (prim__lobRelease lob))
+    release : AnyPtr -> OracleType -> F1' World
+    release ptr oracletype =
+      case oracletype of
+        OracleTypeBlob =>
+          ioToF1 (primIO (prim__lobRelease ptr))
+        OracleTypeClob =>
+          ioToF1 (primIO (prim__lobRelease ptr))
+        OracleTypeJSON =>
+          ioToF1 (primIO (prim__jsonFree ptr))
+        ty             =>
+          assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn.withDataPtrAndOracleType.release: unsupported oracle type" 
     withDataPtrAndOracleType : AnyPtr -> OracleType -> Elin World [] (Either OracleError OracleValue)
     withDataPtrAndOracleType dataptr oracletype =
       bracket (runIO (acquire dataptr))
-              (\lob => runIO (use lob oracletype))
-              (\lob => runIO (release lob))
+              (\ptr => runIO (use ptr oracletype))
+              (\ptr => runIO (release ptr))
