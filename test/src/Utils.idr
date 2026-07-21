@@ -26,14 +26,55 @@ ignoreMissingObject action = do
         False =>
           pure (Left err)
 
-||| Install the database schema required by the integration test suite.
+||| Setup the test user, and install the database schema required by the integration test suite.
 |||
-||| Any existing schema objects are dropped before being recreated so every
-||| test run starts from a known schema.
+||| Any existing schema objects are dropped before being recreated so every test run starts from a known schema.
 |||
 export
-installSchema : Connection -> IO (Either OracleError ())
-installSchema conn =
+setupTestUserAndinstallSchema : Connection -> IO (Either OracleError ())
+setupTestUserAndinstallSchema conn =
+  ignoreMissingObject
+    ( execute_
+        conn """
+             CREATE TABLESPACE idris_test_data
+             DATAFILE '/opt/oracle/oradata/FREEPDB1/idris_test_data01.dbf'
+             SIZE 100M
+             AUTOEXTEND ON
+             NEXT 10M
+             MAXSIZE 1G
+             EXTENT MANAGEMENT LOCAL
+             SEGMENT SPACE MANAGEMENT AUTO;
+             """
+             []
+    )
+  >>== \_ =>
+  ignoreMissingObject
+    ( execute_
+        conn """
+             CREATE USER idris
+             IDENTIFIED BY idris
+             DEFAULT TABLESPACE idris_test_data;
+             """
+             []
+    )
+  >>== \_ =>
+  ignoreMissingObject
+    ( execute_
+        conn """
+             ALTER USER idris
+             QUOTA UNLIMITED ON idris_test_data;
+             """
+             []
+    )
+  >>== \_ =>
+  ignoreMissingObject
+    ( execute_
+        conn """
+             GRANT CREATE SESSION, CREATE TABLE, CREATE SEQUENCE TO idris;
+             """
+             []
+    )
+  >>== \_ =>
   ignoreMissingObject
     (execute_ conn "DROP TABLE blobs CASCADE CONSTRAINTS" [])
   >>== \_ =>
@@ -60,7 +101,8 @@ installSchema conn =
     hire_timestamp      TIMESTAMP,
     meeting_time_tz     TIMESTAMP WITH TIME ZONE,
     vacation_length     INTERVAL YEAR(4) TO MONTH,
-    uptime              INTERVAL DAY(9) TO SECOND(9)
+    uptime              INTERVAL DAY(9) TO SECOND(9),
+    profile             JSON
     )
     """
     []
@@ -132,7 +174,8 @@ seedPeople conn =
         hire_timestamp,
         meeting_time_tz,
         vacation_length,
-        uptime
+        uptime,
+        profile
     )
     VALUES
     (
@@ -146,7 +189,8 @@ seedPeople conn =
         :hire_timestamp,
         :meeting_time_tz,
         :vacation_length,
-        :uptime
+        :uptime,
+        JSON('{"department":"Engineering","skills":["Idris2","Haskell","C"],"active":true}')
     )
     """
     [ MkBindParameter ":name"   (OracleString "Alice")
@@ -198,7 +242,8 @@ seedPeople conn =
         hire_timestamp,
         meeting_time_tz,
         vacation_length,
-        uptime
+        uptime,
+        profile
     )
     VALUES
     (
@@ -212,7 +257,8 @@ seedPeople conn =
         :hire_timestamp,
         :meeting_time_tz,
         :vacation_length,
-        :uptime
+        :uptime,
+        JSON('{"department":"Research","skills":["Python","R"],"active":false}')
     )
     """
     [ MkBindParameter ":name"   (OracleString "Bob")

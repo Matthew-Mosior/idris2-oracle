@@ -10,6 +10,9 @@ SYS_PASSWORD="oracle123"
 TEST_USER="idris"
 TEST_PASSWORD="idris"
 
+TABLESPACE="idris_test_data"
+DATAFILE="/opt/oracle/oradata/FREE/FREEPDB1/idris_test_data01.dbf"
+
 echo "=================================================="
 echo "Oracle Database Free Test Setup"
 echo "=================================================="
@@ -57,16 +60,44 @@ done
 echo "Oracle is ready."
 
 echo
-echo "Ensuring integration test user exists..."
+echo "Ensuring integration test user and tablespace exist..."
 
 docker exec "$CONTAINER" bash -c "
 sqlplus -L -s system/$SYS_PASSWORD@//127.0.0.1:1521/FREEPDB1 <<EOF
 
-WHENEVER SQLERROR CONTINUE
+WHENEVER SQLERROR EXIT SQL.SQLCODE
 
 DECLARE
-    user_exists NUMBER;
+    user_exists       NUMBER;
+    tablespace_exists NUMBER;
 BEGIN
+
+    ----------------------------------------------------------------
+    -- Create the dedicated test tablespace if it does not exist.
+    ----------------------------------------------------------------
+
+    SELECT COUNT(*)
+      INTO tablespace_exists
+      FROM dba_tablespaces
+     WHERE tablespace_name = UPPER('$TABLESPACE');
+
+    IF tablespace_exists = 0 THEN
+
+        EXECUTE IMMEDIATE
+            'CREATE TABLESPACE $TABLESPACE
+             DATAFILE ''$DATAFILE''
+             SIZE 100M
+             AUTOEXTEND ON
+             NEXT 10M
+             MAXSIZE 1G
+             EXTENT MANAGEMENT LOCAL
+             SEGMENT SPACE MANAGEMENT AUTO';
+
+    END IF;
+
+    ----------------------------------------------------------------
+    -- Create the integration test user if it does not exist.
+    ----------------------------------------------------------------
 
     SELECT COUNT(*)
       INTO user_exists
@@ -76,33 +107,49 @@ BEGIN
     IF user_exists = 0 THEN
 
         EXECUTE IMMEDIATE
-            'CREATE USER $TEST_USER IDENTIFIED BY $TEST_PASSWORD';
-
-        EXECUTE IMMEDIATE
-            'GRANT CREATE SESSION TO $TEST_USER';
-
-        EXECUTE IMMEDIATE
-            'GRANT CREATE TABLE TO $TEST_USER';
-
-        EXECUTE IMMEDIATE
-            'GRANT CREATE VIEW TO $TEST_USER';
-
-        EXECUTE IMMEDIATE
-            'GRANT CREATE SEQUENCE TO $TEST_USER';
-
-        EXECUTE IMMEDIATE
-            'GRANT CREATE PROCEDURE TO $TEST_USER';
-
-        EXECUTE IMMEDIATE
-            'GRANT CREATE TRIGGER TO $TEST_USER';
-
-        EXECUTE IMMEDIATE
-            'GRANT CREATE TYPE TO $TEST_USER';
-
-        EXECUTE IMMEDIATE
-            'GRANT UNLIMITED TABLESPACE TO $TEST_USER';
+            'CREATE USER $TEST_USER
+             IDENTIFIED BY $TEST_PASSWORD
+             DEFAULT TABLESPACE $TABLESPACE';
 
     END IF;
+
+    ----------------------------------------------------------------
+    -- Ensure the test user uses the dedicated tablespace.
+    ----------------------------------------------------------------
+
+    EXECUTE IMMEDIATE
+        'ALTER USER $TEST_USER
+         DEFAULT TABLESPACE $TABLESPACE';
+
+    EXECUTE IMMEDIATE
+        'ALTER USER $TEST_USER
+         QUOTA UNLIMITED ON $TABLESPACE';
+
+
+    ----------------------------------------------------------------
+    -- Required privileges for the integration test suite.
+    ----------------------------------------------------------------
+
+    EXECUTE IMMEDIATE
+        'GRANT CREATE SESSION TO $TEST_USER';
+
+    EXECUTE IMMEDIATE
+        'GRANT CREATE TABLE TO $TEST_USER';
+
+    EXECUTE IMMEDIATE
+        'GRANT CREATE VIEW TO $TEST_USER';
+
+    EXECUTE IMMEDIATE
+        'GRANT CREATE SEQUENCE TO $TEST_USER';
+
+    EXECUTE IMMEDIATE
+        'GRANT CREATE PROCEDURE TO $TEST_USER';
+
+    EXECUTE IMMEDIATE
+        'GRANT CREATE TRIGGER TO $TEST_USER';
+
+    EXECUTE IMMEDIATE
+        'GRANT CREATE TYPE TO $TEST_USER';
 
 END;
 /
@@ -122,6 +169,9 @@ echo "Service:   FREEPDB1"
 echo "Username:  $TEST_USER"
 echo "Password:  $TEST_PASSWORD"
 echo
-echo "Schema installation is handled by installSchema."
+echo "Tablespace: $TABLESPACE"
+echo "Datafile:   $DATAFILE"
+echo
+echo "Schema installation is handled by setupTestUserAndinstallSchema."
 echo "Test data is reset by resetDatabase before each test."
 echo "=================================================="
