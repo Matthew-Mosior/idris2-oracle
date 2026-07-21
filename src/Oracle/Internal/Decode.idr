@@ -147,17 +147,6 @@ decodeColumn stmt column = do
                           pure (Right value')
                     Left err    =>
                       assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
-                OracleTypeJSON        => do
-                  result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeJSON) 
-                  case result of
-                    Right value =>
-                      case value of
-                        Left err     =>
-                          pure (Left err)
-                        Right value' =>
-                          pure (Right value')
-                    Left err    =>
-                      assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
                 OracleTypeBoolean     => do
                   b <- primIO (prim__dataBool dataptr)
                   case b of
@@ -212,15 +201,6 @@ decodeColumn stmt column = do
                           text <- primIO (prim__clobRead ptr)
                           pure (Right $ OracleClob text)
                  )
-        OracleTypeJSON =>
-          ioToF1 ( do case prim__nullAnyPtr ptr == 1 of
-                        True  => do
-                          lasterr <- getLastError
-                          pure (Left lasterr)
-                        False => do
-                          text <- primIO (prim__clobRead ptr)
-                          pure (Right $ OracleJSON text) 
-                 )
         ty             =>
           ioToF1 ( pure $
                      Left $
@@ -230,17 +210,9 @@ decodeColumn stmt column = do
                          "Oracle.Internal.Decode.decodeColumn.use"
                          False
                  )
-    release : AnyPtr -> OracleType -> F1' World
-    release ptr oracletype =
-      case oracletype of
-        OracleTypeBlob =>
-          ioToF1 (primIO (prim__lobRelease ptr))
-        OracleTypeClob =>
-          ioToF1 (primIO (prim__lobRelease ptr))
-        OracleTypeJSON =>
-          ioToF1 (primIO (prim__jsonFree ptr))
-        ty             =>
-          assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn.withDataPtrAndOracleType.release: unsupported oracle type" 
+    release : AnyPtr -> F1' World
+    release ptr =
+      ioToF1 (primIO (prim__lobRelease ptr))
     withDataPtrAndOracleType : AnyPtr -> OracleType -> Elin World [] (Either OracleError OracleValue)
     withDataPtrAndOracleType dataptr oracletype =
       bracket (runIO (acquire dataptr))

@@ -15,7 +15,6 @@ data OracleType
   | OracleTypeIntervalDS
   | OracleTypeClob
   | OracleTypeBlob
-  | OracleTypeJSON
   | OracleTypeBoolean
   | OracleTypeUnknown Int32
 
@@ -34,6 +33,5 @@ fromOracleTypeNum 2015 = OracleTypeIntervalDS
 fromOracleTypeNum 2016 = OracleTypeIntervalYM
 fromOracleTypeNum 2017 = OracleTypeClob
 fromOracleTypeNum 2019 = OracleTypeBlob
-fromOracleTypeNum 2027 = OracleTypeJSON
 fromOracleTypeNum 2022 = OracleTypeBoolean
 fromOracleTypeNum n    = OracleTypeUnknown n

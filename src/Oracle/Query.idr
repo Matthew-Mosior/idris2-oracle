@@ -1,10 +1,13 @@
 module Oracle.Query
 
+import JSON
 import Oracle.Statement
 import Oracle.Internal.Either
+import Oracle.Internal.JSONQuery
 import Oracle.Internal.Pointer
 import Oracle.Types.BindParameter
 import Oracle.Types.Error
+import Oracle.Types.JSONQuery
 import Oracle.Types.Row
 import Oracle.Types.Value
 
@@ -198,6 +201,208 @@ queryExactlyOne conn sql params = do
             "Expected exactly one row but query returned multiple rows"
             "Oracle.Query.queryExactlyOne"
             False
+
+||| Execute a JSON query and return the serialized JSON document.
+|||
+||| The JSONQuery expression is wrapped internally as:
+|||
+|||   JSON_SERIALIZE(expression RETURNING CLOB)
+|||
+||| The query must return exactly one row containing one non-null JSON value.
+|||
+||| The returned JSON is represented as a String so that it can be decoded using the Idris2 JSON library.
+|||
+||| Example:
+|||
+|||   queryJSON conn
+|||     (MkJSONQuery
+|||       "payload"
+|||       "documents WHERE id = :id"
+|||       [MkBindParameter "id" (OracleNumber 42)])
+|||
+export covering
+queryJSON : Connection -> JSONQuery -> IO (Either OracleError String)
+queryJSON conn jsonquery = do
+  result <- query conn (buildJSONQuerySQL jsonquery) jsonquery.binds
+  case result of
+    Left err   =>
+      pure (Left err)
+    Right rows =>
+      case rows of
+        []    =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                "JSON query returned no rows"
+                "Oracle.Query.queryJSON"
+                False
+        [row] =>
+          case row of
+            []           =>
+              pure $
+                Left $
+                  MkOracleError
+                    (-1)
+                    "JSON query returned no columns"
+                    "Oracle.Query.queryJSON"
+                    False
+            [OracleNull] =>
+              pure $
+                Left $
+                  MkOracleError
+                    (-1)
+                    "JSON query returned NULL"
+                    "Oracle.Query.queryJSON"
+                    False
+            [OracleClob value] =>
+              pure (Right value)
+            [OracleString value] =>
+              pure $
+                Left $
+                  MkOracleError
+                    (-1)
+                    "JSON query returned an OracleString"
+                    "Oracle.Query.queryJSON"
+                    False
+            _ =>
+              pure $
+                Left $
+                  MkOracleError
+                    (-1)
+                    "JSON query returned an unexpected value type"
+                    "queryJSON"
+                    False
+        _ =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                "JSON query returned more than one row; use queryJSONList"
+                "queryJSON"
+                False
+
+||| Execute a JSON query and return all serialized JSON documents.
+|||
+||| Each row must contain exactly one non-null JSON value.
+|||
+||| This is the multi-row counterpart to queryJSON.
+|||
+export covering
+queryJSONList : Connection -> JSONQuery -> IO (Either OracleError (List String))
+queryJSONList conn jsonquery = do
+  result <- query conn (buildJSONQuerySQL jsonquery) jsonquery.binds
+  case result of
+    Left err   =>
+      pure (Left err)
+    Right rows =>
+      decodeRows rows
+  where
+    decodeRows : List (List OracleValue) -> IO (Either OracleError (List String))
+    decodeRows []            =
+      pure (Right [])
+    decodeRows (row :: rest) =
+      case row of
+        [OracleClob value]   => do
+          tailresult <- decodeRows rest
+          case tailresult of
+            Left err     =>
+              pure (Left err)
+            Right values =>
+              pure (Right (value :: values))
+        [OracleString value] =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                "JSON query returned an OracleString"
+                "Oracle.Query.queryJSONList"
+                False
+        [OracleNull]         =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                "JSON query returned NULL"
+                "Oracle.Query.queryJSONList"
+                False
+        []                   =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                "JSON query returned no columns"
+                "Oracle.Query.queryJSONList"
+                False
+        _                    =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                "JSON query returned an unexpected number or type of columns"
+                "Oracle.Query.queryJSONList"
+                False
+
+||| Execute a JSON query and decode the resulting JSON document.
+|||
+||| The result is decoded using the FromJSON implementation for `a`.
+|||
+||| This allows callers to query Oracle JSON directly into an Idris data type with a derived FromJSON implementation.
+|||
+export covering
+queryJSONAs : FromJSON a => Connection -> JSONQuery -> IO (Either OracleError a)
+queryJSONAs conn query = do
+  result <- queryJSON conn query
+  case result of
+    Left err   =>
+      pure (Left err)
+    Right json =>
+      case decode json of
+        Left jsonerr =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                ("Failed to decode JSON: " ++ show jsonerr)
+                "Oracle.Query.queryJSONAs"
+                False
+        Right value  =>
+          pure (Right value)
+
+||| Execute a JSON query and decode all resulting JSON documents.
+|||
+||| Each row is decoded using the FromJSON implementation for `a`.
+|||
+export covering
+queryJSONListAs : FromJSON a => Connection -> JSONQuery -> IO (Either OracleError (List a))
+queryJSONListAs conn query = do
+  result <- queryJSONList conn query
+  case result of
+    Left err         =>
+      pure (Left err)
+    Right jsonvalues =>
+      decodeValues jsonvalues
+  where
+    decodeValues : List String -> IO (Either OracleError (List a))
+    decodeValues []             =
+      pure (Right [])
+    decodeValues (json :: rest) =
+      case decode json of
+        Left jsonerr =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                ("Failed to decode JSON: " ++ show jsonerr)
+                "Oracle.Query.queryJSONListAs"
+                False
+        Right value  => do
+          tailresult <- decodeValues rest
+          case tailresult of
+            Left err     =>
+              pure (Left err)
+            Right values =>
+              pure (Right (value :: values))
 
 --------------------------------------------------------------------------------
 --          Execute Statement That Returns No Rows

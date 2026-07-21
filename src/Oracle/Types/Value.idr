@@ -18,7 +18,6 @@ data OracleValue
   | OracleBool        Bool        -- BOOLEAN
   | OracleClob        String      -- Character large object (CLOB)
   | OracleBlob        ByteString  -- Binary large object (BLOB)
-  | OracleJSON        String      -- JSON
   | OracleTimestamp   OracleTimestamp
   | OracleTimestampTZ OracleTimestampTZ
   | OracleIntervalYM  OracleIntervalYM
