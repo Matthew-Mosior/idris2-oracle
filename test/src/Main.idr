@@ -15,7 +15,7 @@ main : IO ()
 main = do
   result <-
     withConnection connectinfo $ \conn =>
-      setupTestUserAndinstallSchema conn >>== \_ =>
+      installSchema conn >>== \_ =>
       resetDatabase conn >>== \_ =>
       test_OpenConnection connectinfo >>== \_ =>
       test_WithConnection connectinfo >>== \_ =>

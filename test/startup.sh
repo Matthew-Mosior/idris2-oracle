@@ -172,6 +172,6 @@ echo
 echo "Tablespace: $TABLESPACE"
 echo "Datafile:   $DATAFILE"
 echo
-echo "Schema installation is handled by setupTestUserAndinstallSchema."
+echo "Schema installation is handled by installSchema."
 echo "Test data is reset by resetDatabase before each test."
 echo "=================================================="

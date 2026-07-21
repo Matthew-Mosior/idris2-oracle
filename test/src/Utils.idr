@@ -31,50 +31,8 @@ ignoreMissingObject action = do
 ||| Any existing schema objects are dropped before being recreated so every test run starts from a known schema.
 |||
 export
-setupTestUserAndinstallSchema : Connection -> IO (Either OracleError ())
-setupTestUserAndinstallSchema conn =
-  ignoreMissingObject
-    ( execute_
-        conn """
-             CREATE TABLESPACE idris_test_data
-             DATAFILE '/opt/oracle/oradata/FREEPDB1/idris_test_data01.dbf'
-             SIZE 100M
-             AUTOEXTEND ON
-             NEXT 10M
-             MAXSIZE 1G
-             EXTENT MANAGEMENT LOCAL
-             SEGMENT SPACE MANAGEMENT AUTO;
-             """
-             []
-    )
-  >>== \_ =>
-  ignoreMissingObject
-    ( execute_
-        conn """
-             CREATE USER idris
-             IDENTIFIED BY idris
-             DEFAULT TABLESPACE idris_test_data;
-             """
-             []
-    )
-  >>== \_ =>
-  ignoreMissingObject
-    ( execute_
-        conn """
-             ALTER USER idris
-             QUOTA UNLIMITED ON idris_test_data;
-             """
-             []
-    )
-  >>== \_ =>
-  ignoreMissingObject
-    ( execute_
-        conn """
-             GRANT CREATE SESSION, CREATE TABLE, CREATE SEQUENCE TO idris;
-             """
-             []
-    )
-  >>== \_ =>
+installSchema : Connection -> IO (Either OracleError ())
+installSchema conn =
   ignoreMissingObject
     (execute_ conn "DROP TABLE blobs CASCADE CONSTRAINTS" [])
   >>== \_ =>
