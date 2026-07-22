@@ -148,7 +148,7 @@ seedPeople conn =
         :meeting_time_tz,
         :vacation_length,
         :uptime,
-        JSON('{"department":"Engineering","skills":["Idris2","Haskell","C"],"active":true}')
+        :profile
     )
     """
     [ MkBindParameter ":name"   (OracleString "Alice")
@@ -183,6 +183,8 @@ seedPeople conn =
                                       42
                                       555000000
                                 )
+    , MkBindParameter ":profile" ( OracleString "{\"department\":\"Engineering\",\"skills\":[\"Idris2\",\"Haskell\",\"C\"],\"active\":true}"
+                                 )
     ]
   >>== \_ =>
   execute_
@@ -216,7 +218,7 @@ seedPeople conn =
         :meeting_time_tz,
         :vacation_length,
         :uptime,
-        JSON('{"department":"Research","skills":["Python","R"],"active":false}')
+        :profile
     )
     """
     [ MkBindParameter ":name"   (OracleString "Bob")
@@ -251,6 +253,8 @@ seedPeople conn =
                                       59
                                       999999999
                                 )
+    , MkBindParameter ":profile" ( OracleString "{\"department\":\"Research\",\"skills\":[\"Python\",\"R\"],\"active\":false}"
+                                 )
     ]
 
 ||| Populate the BLOBS table with the standard integration test fixture.

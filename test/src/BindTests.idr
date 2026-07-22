@@ -4,7 +4,6 @@ import ConnectInfoTest
 import Data.ByteString
 import Oracle
 import Oracle.Types.DateTime
-import System
 
 private
 runBind : Connection -> String -> List BindParameter -> IO (Either OracleError ())
@@ -41,7 +40,12 @@ test_BindNull conn = do
       []
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindNull"
+                        False
     Right () =>
       pure (Right ())
 
@@ -59,7 +63,12 @@ test_BindString conn = do
       [ MkBindParameter ":name" (OracleString "Alice") ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindString"
+                        False
     Right () =>
       pure (Right ())
 
@@ -81,7 +90,12 @@ test_BindEmptyString conn = do
     Left _   =>
       pure (Right ())
     Right () =>
-      die "Expected Oracle to treat empty string as NULL."
+      pure $
+        Left $
+          MkOracleError (-1)
+                        "Expected Oracle to treat empty string as NULL"
+                        "BindTests.test_BindEmptyString"
+                        False
 
 ||| Verify NUMBER integer binding.
 |||
@@ -97,7 +111,12 @@ test_BindInt conn = do
       [ MkBindParameter ":age" (OracleNumber 42) ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindInt"
+                        False
     Right () =>
       pure (Right ())
 
@@ -115,7 +134,12 @@ test_BindDouble conn = do
       [ MkBindParameter ":salary" (OracleNumber 12345.67) ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindDouble"
+                        False
     Right () =>
       pure (Right ())
 
@@ -133,7 +157,12 @@ test_BindBoolTrue conn = do
       [ MkBindParameter ":active" (OracleBool True) ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindBoolTrue"
+                        False
     Right () =>
       pure (Right ())
 
@@ -151,7 +180,12 @@ test_BindBoolFalse conn = do
       [ MkBindParameter ":active" (OracleBool False) ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindBoolFalse"
+                        False
     Right () =>
       pure (Right ())
 
@@ -169,7 +203,12 @@ test_BindClob conn = do
       [ MkBindParameter ":notes" (OracleClob "Large text") ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindClob"
+                        False
     Right () =>
       pure (Right ())
 
@@ -190,7 +229,12 @@ test_BindBlob conn = do
       ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindBlob"
+                        False
     Right () =>
       pure (Right ())
 
@@ -213,7 +257,12 @@ test_BindTimestamp conn = do
       ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindTimestamp"
+                        False
     Right () =>
       pure (Right ())
 
@@ -240,7 +289,12 @@ test_BindTimestampTZ conn = do
       ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindTimestampTZ"
+                        False
     Right () =>
       pure (Right ())
 
@@ -262,7 +316,12 @@ test_BindIntervalYM conn = do
       ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindIntervalYM"
+                        False
     Right () =>
       pure (Right ())
 
@@ -285,7 +344,12 @@ test_BindIntervalDS conn = do
       ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindIntervalDS"
+                        False
     Right () =>
       pure (Right ())
 
@@ -319,7 +383,12 @@ test_BindManyParameters conn = do
       ]
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindManyParameters"
+                        False
     Right () =>
       pure (Right ())
 

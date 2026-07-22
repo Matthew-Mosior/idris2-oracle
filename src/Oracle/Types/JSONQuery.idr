@@ -4,9 +4,7 @@ import Oracle.Types.BindParameter
 
 ||| A query whose selected expression is expected to produce a JSON value.
 |||
-||| The expression is wrapped by queryJSON as:
-|||
-|||   JSON_SERIALIZE(expression RETURNING CLOB)
+||| The expression is wrapped by queryJSON as: JSON_SERIALIZE(expression RETURNING CLOB)
 |||
 ||| The resulting CLOB is then returned to Idris as a String.
 |||

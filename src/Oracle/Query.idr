@@ -227,7 +227,7 @@ queryJSON conn jsonquery = do
   case result of
     Left err   =>
       pure (Left err)
-    Right rows =>
+    Right rows => do
       case rows of
         []    =>
           pure $
@@ -239,7 +239,7 @@ queryJSON conn jsonquery = do
                 False
         [row] =>
           case row of
-            []           =>
+            []                   =>
               pure $
                 Left $
                   MkOracleError
@@ -247,7 +247,7 @@ queryJSON conn jsonquery = do
                     "JSON query returned no columns"
                     "Oracle.Query.queryJSON"
                     False
-            [OracleNull] =>
+            [OracleNull]         =>
               pure $
                 Left $
                   MkOracleError
@@ -255,7 +255,7 @@ queryJSON conn jsonquery = do
                     "JSON query returned NULL"
                     "Oracle.Query.queryJSON"
                     False
-            [OracleClob value] =>
+            [OracleClob value]   =>
               pure (Right value)
             [OracleString value] =>
               pure $
@@ -265,7 +265,7 @@ queryJSON conn jsonquery = do
                     "JSON query returned an OracleString"
                     "Oracle.Query.queryJSON"
                     False
-            _ =>
+            _                    =>
               pure $
                 Left $
                   MkOracleError
@@ -273,7 +273,7 @@ queryJSON conn jsonquery = do
                     "JSON query returned an unexpected value type"
                     "queryJSON"
                     False
-        _ =>
+        _     =>
           pure $
             Left $
               MkOracleError
