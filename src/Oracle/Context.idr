@@ -2,7 +2,7 @@ module Oracle.Context
 
 import Oracle.Error
 import Oracle.FFI.Context
-import Oracle.Types.Context
+import Oracle.Internal.Context
 import Oracle.Types.Error
 
 import PrimIO

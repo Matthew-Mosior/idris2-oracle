@@ -28,6 +28,7 @@ modules    = Oracle
            , Oracle.FFI.QueryInfo
            , Oracle.FFI.Statement
            , Oracle.FFI.Transaction
+           , Oracle.Internal.Context
            , Oracle.Internal.Decode
            , Oracle.Internal.Either
            , Oracle.Internal.JSONQuery
@@ -37,7 +38,6 @@ modules    = Oracle
            , Oracle.Types.BindParameter
            , Oracle.Types.ColumnInfo
            , Oracle.Types.ConnectInfo
-           , Oracle.Types.Context
            , Oracle.Types.DateTime
            , Oracle.Types.Error
            , Oracle.Types.Instances
