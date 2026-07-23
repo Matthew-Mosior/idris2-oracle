@@ -1052,6 +1052,453 @@ Similarly, `ToRow` allows records to be converted into collections of bind param
 
 This separation keeps database-specific logic isolated from application code.
 
+## Queries
+
+The query API provides two levels of access to Oracle query results.
+
+At the lower level, queries return Oracle values directly:
+-   `query` retrieves all rows
+-   `queryOne` retrieves a single row
+
+At the higher level, `queryAs` and `queryOneAs` decode query results directly into user-defined Idris types using the `FromOracle` interface.
+
+Queries are represented by the `Query` record, while individual selected expressions are represented by `QueryColumn`.
+
+### `Query`
+
+A `Query` describes a complete SQL query:
+
+```idris
+public export
+record Query where
+  constructor MkQuery
+  columns : List QueryColumn
+  querybody : String
+  binds : List BindParameter
+```
+
+The `columns` field describes the expressions selected by the query.
+
+The `querybody` field contains the remainder of the SQL query, beginning with the `FROM` clause and including any additional clauses required to identify or order the result rows.
+
+The `binds` field contains the bind parameters used by the query.
+
+For example:
+
+```idris
+MkQuery
+  [ QueryColumn "id"
+  , QueryColumn "name"
+  ]
+  "people WHERE active = :active ORDER BY id"
+  [MkBindParameter ":active" (OracleBool True)]
+```
+
+Represents a query equivalent to:
+
+```sql
+SELECT id, name
+FROM people
+WHERE active = :active
+ORDER BY id
+```
+
+The `Query` abstraction allows the query execution layer to know how each selected expression should be retrieved and decoded.
+
+### `QueryColumn`
+
+A `QueryColumn` describes one expression in the `SELECT` list.
+
+A column can represent an ordinary Oracle expression or a JSON expression.
+
+Conceptually, the two forms are:
+
+```idris
+QueryColumn "name"
+```
+
+And:
+
+```idris
+QueryColumnJSON "profile"
+```
+
+An ordinary column is selected directly:
+
+```sql
+SELECT name
+FROM people
+```
+
+A JSON column is internally transformed into a textual CLOB representation:
+
+```sql
+SELECT JSON_SERIALIZE(profile RETURNING CLOB)
+FROM people
+```
+
+This allows native Oracle JSON values to be retrieved through the same CLOB handling already used by the library.
+
+Oracle's `JSON_SERIALIZE` function converts JSON data into textual JSON and supports `CLOB` as a return type, making it suitable for retrieving JSON values that may exceed the size of a normal `VARCHAR2` result.
+
+The JSON transformation is an implementation detail of query execution. Users do not need to manually write `JSON_SERIALIZE` when using `QueryColumnJSON`.
+
+For example:
+
+```idris
+MkQuery
+  [ QueryColumn "id"
+  , QueryColumn "name"
+  , QueryColumnJSON "profile"
+  ]
+  "people"
+  []
+```
+
+Is logically equivalent to:
+
+```sql
+SELECT
+    id,
+    name,
+    JSON_SERIALIZE(profile RETURNING CLOB)
+FROM people
+```
+
+This means a query may contain any mixture of ordinary and JSON columns.
+
+For example:
+
+```idris
+MkQuery
+  [ QueryColumn "id"
+  , QueryColumnJSON "profile"
+  , QueryColumn "name"
+  ]
+  "people WHERE id = :id"
+  [MkBindParameter ":id" (OracleNumber 1)]
+```
+
+The selected expressions are therefore:
+1.  `id` — ordinary Oracle value
+2.  `profile` — JSON value serialized to a CLOB
+3.  `name` — ordinary Oracle value
+
+The resulting row can then be decoded into an Idris record containing both ordinary fields and JSON-derived fields.
+
+## Typed Queries
+
+The typed query API allows query results to be decoded directly into Idris data types.
+
+A type used with `queryAs` or `queryOneAs` must have an appropriate `FromOracle` implementation.
+
+For example:
+
+```idris
+public export
+record Person where
+  constructor MkPerson
+  id      : Int
+  name    : String
+  profile : MyProfile
+```
+
+Where `MyProfile` is a JSON-decodable type.
+
+The JSON value is first retrieved from Oracle as serialized JSON text and then decoded into the target Idris type.
+
+### queryAs
+
+`queryAs` executes a query and decodes every returned row into the requested Idris type.
+
+```idris
+queryAs
+  : FromOracle a
+  => Connection
+  -> Query
+  -> IO (Either OracleError (List a))
+```
+
+For example:
+
+```idris
+queryAs
+  conn
+  (MkQuery
+    [ QueryColumn "id"
+    , QueryColumn "name"
+    , QueryColumnJSON "profile"
+    ]
+    "people ORDER BY id"
+    [])
+
+```
+
+Returns:
+
+```idris
+Either OracleError (List Person)
+```
+
+Assuming an appropriate `FromOracle Person` implementation exists.
+
+The query may return zero or more rows.
+
+A successful query with no matching rows returns:
+
+```idris
+Right []
+```
+
+A query or decoding failure returns:
+
+```idris
+Left error
+```
+
+### queryOneAs
+
+`queryOneAs` executes a query and decodes exactly one returned row into the requested Idris type.
+
+```idris
+queryOneAs
+  : FromOracle a
+  => Connection
+  -> Query
+  -> IO (Either OracleError a)
+```
+
+For example:
+
+```idris
+queryOneAs
+  conn
+  (MkQuery
+    [ QueryColumn "id"
+    , QueryColumn "name"
+    , QueryColumnJSON "profile"
+    ]
+    "people WHERE name = :name"
+    [MkBindParameter ":name" (OracleString "Alice")])
+```
+
+Returns a single `Person`.
+
+If the query does not return a row, `queryOneAs` returns an `OracleError`.
+
+If the query returns more than one row, the behavior is determined by the implementation's single-row query semantics and should be documented explicitly. Queries passed to `queryOneAs` should therefore normally identify at most one row, for example by using a primary key or another unique predicate.
+
+## JSON Query Columns
+
+JSON support is integrated into the general query API through `QueryColumn`.
+
+This means JSON is not a separate query mechanism. A query can contain ordinary Oracle columns and JSON columns simultaneously.
+
+For example:
+
+```idris
+MkQuery
+  [ QueryColumn "id"
+  , QueryColumn "name"
+  , QueryColumnJSON "profile"
+  ]
+  "people WHERE name = :name"
+  [MkBindParameter ":name" (OracleString "Alice")]
+```
+
+The query execution layer generates SQL equivalent to:
+
+```sql
+SELECT
+    id,
+    name,
+    JSON_SERIALIZE(profile RETURNING CLOB)
+FROM people
+WHERE name = :name
+```
+
+The serialized JSON is retrieved as a CLOB, converted to an Idris `String`, and then passed through the normal `FromOracle` decoding pipeline.
+
+This design has several advantages:
+-   JSON-specific SQL generation remains inside the query layer.
+-   The C shim does not require JSON-specific logic.
+-   JSON values use the existing CLOB retrieval mechanism.
+-   A single query can mix JSON and non-JSON columns.
+-   Typed queries can decode JSON directly into nested Idris data types.
+-   `queryAs` and `queryOneAs` provide the same API regardless of whether a result contains JSON columns.
+
+The user therefore only needs to indicate which selected expressions contain JSON.
+
+## Example: Typed JSON Result
+
+Consider a JSON document stored in the `profile` column:
+
+```json
+{
+  "department": "Engineering",
+  "skills": [
+    "Idris2",
+    "Haskell",
+    "C"
+  ],
+  "active": true
+}
+```
+
+An Idris representation might be:
+
+```idris
+public export
+record Profile where
+  constructor MkProfile
+  department : String
+  skills     : List String
+  active     : Bool
+```
+
+The enclosing row can then be represented as:
+
+```idris
+public export
+record PersonProfile where
+  constructor MkPersonProfile
+  id      : Int
+  name    : String
+  profile : Profile
+```
+
+The query can select both normal and JSON columns:
+
+```idris
+queryOneAs
+  conn
+  (MkQuery
+    [ QueryColumn "id"
+    , QueryColumn "name"
+    , QueryColumnJSON "profile"
+    ]
+    "people WHERE name = :name"
+    [MkBindParameter ":name" (OracleString "Alice")])
+```
+
+The resulting value is decoded into:
+
+```idris
+PersonProfile
+```
+
+With the nested JSON document decoded into:
+
+```idris
+Profile
+```
+
+This allows JSON stored in Oracle to be treated as a normal typed component of an Idris query result.
+
+## Raw Queries vs Typed Queries
+
+The two query APIs serve different purposes.
+
+### Raw query API
+Use `query` and `queryOne` when:
+-   The result shape is dynamic
+-   The caller needs to inspect Oracle values directly
+-   The result does not map naturally to a predefined Idris record
+-   The caller wants to perform custom decoding
+
+Example:
+
+```idris
+query
+  conn
+  (MkQuery
+    [ QueryColumn "id"
+    , QueryColumnJSON "profile"
+    ]
+    "people"
+    [])
+```
+
+This returns raw Oracle values.
+
+### Typed query API
+
+Use `queryAs` and `queryOneAs` when:
+-   The result shape is known
+-   The caller has an Idris record representing the row
+-   JSON should be decoded into nested Idris types
+-   The application wants compile-time structure around query results
+
+Example:
+
+```idris
+queryOneAs
+  conn
+  (MkQuery
+    [ QueryColumn "id"
+    , QueryColumn "name"
+    , QueryColumnJSON "profile"
+    ]
+    "people WHERE name = :name"
+    [MkBindParameter ":name" (OracleString "Alice")])
+```
+
+The typed API is generally preferred for application-level code, while the raw API is useful for lower-level or dynamic database access.
+
+## Query Design
+
+The `Query` and `QueryColumn` abstractions intentionally separate three concerns:
+
+1.  **What is selected**
+    
+    Represented by `QueryColumn`.
+    
+2.  **How rows are located**
+    
+    Represented by `querybody`.
+    
+3.  **How bind parameters are supplied**
+    
+    Represented by `binds`.
+
+This separation allows the query layer to transform special column types, such as JSON, without requiring callers to manually construct database-specific SQL.
+
+It also provides a natural extension point for future column representations that require SQL-level transformations before being decoded by Idris.
+
+For example, JSON columns can be transformed using:
+
+```sql
+JSON_SERIALIZE(expression RETURNING CLOB)
+```
+
+While the rest of the query remains unchanged.
+
+The resulting architecture is therefore:
+
+```text
+                   Query
+                     |
+          +----------+----------+
+          |                     |
+     QueryColumn           QueryColumnJSON
+          |                     |
+          |             JSON_SERIALIZE(... CLOB)
+          |                     |
+          +----------+----------+
+                     |
+                 Oracle SQL
+                     |
+                Query Result
+                     |
+              OracleValue rows
+                     |
+                FromOracle
+                     |
+                Idris Type
+```
+
+The important property is that JSON handling is performed at the query-expression level rather than by modifying the low-level Oracle value retrieval path. This keeps the existing C shim and general Oracle decoding machinery independent of JSON-specific behavior.
+
 ## Testing
 
 This library includes a comprehensive integration test suite covering the major features of the library.
