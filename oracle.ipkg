@@ -35,6 +35,7 @@ modules    = Oracle
            , Oracle.Internal.Lob
            , Oracle.Internal.QueryInfo
            , Oracle.Internal.Pointer
+           , Oracle.Internal.Query
            , Oracle.Types.BindParameter
            , Oracle.Types.ColumnInfo
            , Oracle.Types.ConnectInfo
@@ -43,6 +44,8 @@ modules    = Oracle
            , Oracle.Types.Instances
            , Oracle.Types.JSONQuery
            , Oracle.Types.OracleType
+           , Oracle.Types.Query
+           , Oracle.Types.QueryColumn
            , Oracle.Types.Row
            , Oracle.Types.Value
 prebuild   = "make -C support"

@@ -50,6 +50,8 @@ main = do
       test_QueryMultipleRows conn >>== \_ =>
       test_QueryAllRows conn >>== \_ =>
       test_QueryWithWhereClause conn >>== \_ =>
+      test_QueryAs conn >>== \_ =>
+      test_QueryOneAs conn >>== \_ =>
       test_QueryTypedPeople conn >>== \_ =>
       test_QueryOneTyped conn >>== \_ =>
       test_QueryOneMissing conn >>== \_ =>
