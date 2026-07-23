@@ -1,12 +1,14 @@
 .PHONY: build install test clean oracle-client oracle-client-check
 
 build: oracle-client-check
+	idris2 --clean oracle.ipkg
 	idris2 --build oracle.ipkg
 
 install: oracle-client-check
 	idris2 --install oracle.ipkg
 
 test: oracle-client-check
+	idris2 --clean oracle.ipkg
 	idris2 --build oracle.ipkg
 	idris2 --install oracle.ipkg
 	cd test && \

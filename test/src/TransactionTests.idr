@@ -3,7 +3,6 @@ module TransactionTests
 import Data.ByteString
 import Oracle
 import Oracle.Types.DateTime
-import System
 import Utils
 
 ||| Verify that COMMIT permanently persists changes.
@@ -45,9 +44,19 @@ test_CommitPersistsChanges conn = do
     Right [[OracleNumber 1]] =>
       pure (Right ())
     Right rows               =>
-      die ("Unexpected rows: " ++ show rows)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected rows: "++ show rows)
+                        "TransactionTests.test_CommitPersistChanges"
+                        False
     Left err                 =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TransactionTests.test_CommitPersistChanges"
+                        False
 
 ||| Verify that ROLLBACK discards uncommitted inserts.
 |||
@@ -88,9 +97,19 @@ test_RollbackDiscardsChanges conn = do
     Right [[OracleNumber 0]] =>
       pure (Right ())
     Right rows               =>
-      die ("Unexpected rows: " ++ show rows)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected rows: "++ show rows)
+                        "TransactionTests.test_RollbackDiscardsChanges"
+                        False
     Left err                 =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TransactionTests.test_RollbackDiscardsChanges"
+                        False
 
 ||| Verify that committed UPDATE statements persist.
 |||
@@ -123,9 +142,19 @@ test_CommitPersistsUpdate conn = do
     Right [[OracleNumber 99]] =>
       pure (Right ())
     Right rows                =>
-      die (show rows)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected rows: " ++ show rows)
+                        "TransactionTests.test_CommitPersistsUpdate"
+                        False
     Left err                  =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TransactionTests.test_CommitPersistsUpdate"
+                        False
 
 ||| Verify that ROLLBACK restores previous values after UPDATE.
 |||
@@ -158,9 +187,19 @@ test_RollbackDiscardsUpdate conn = do
     Right [[OracleNumber 30]] =>
       pure (Right ())
     Right rows                =>
-      die (show rows)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected rows: " ++ show rows)
+                        "TransactionTests.test_RollbackDiscardsUpdate"
+                        False
     Left err                  =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TransactionTests.test_RollbackDiscardsUpdate"
+                        False
 
 ||| Verify that committed DELETE statements persist.
 |||
@@ -185,9 +224,19 @@ test_CommitPersistsDelete conn = do
     Right [[OracleNumber 1]] =>
       pure (Right ())
     Right rows               =>
-      die (show rows)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected rows: " ++ show rows)
+                        "TransactionTests.test_CommitPersistsDelete"
+                        False
     Left err                 =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TransactionTests.test_CommitPersistsDelete"
+                        False
 
 ||| Verify that deleted rows return after ROLLBACK.
 |||
@@ -212,9 +261,19 @@ test_RollbackRestoresDelete conn = do
     Right [[OracleNumber 2]] =>
       pure (Right ())
     Right rows               =>
-      die (show rows)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected rows: " ++ show rows)
+                        "TransactionTests.test_RollbackRestoresDelete"
+                        False
     Left err                 =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TransactionTests.test_RollbackRestoresDelete"
+                        False
 
 ||| Verify that multiple DML statements commit together.
 |||
@@ -250,9 +309,19 @@ test_CommitMultipleStatements conn = do
     Right [[OracleNumber 2]] =>
       pure (Right ())
     Right rows               =>
-      die (show rows)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected rows: " ++ show rows)
+                        "TransactionTests.test_CommitMultipleStatements"
+                        False
     Left err                 =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TransactionTests.test_CommitMultipleStatements"
+                        False
 
 ||| Verify that multiple DML statements are rolled back together.
 |||
@@ -288,6 +357,16 @@ test_RollbackMultipleStatements conn = do
     Right [[OracleNumber 0]] =>
       pure (Right ())
     Right rows               =>
-      die (show rows)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected rows: " ++ show rows)
+                        "TransactionTests.test_RollbackMultipleStatements"
+                        False
     Left err                 =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TransactionTests.test_RollbackMultipleStatements"
+                        False

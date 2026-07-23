@@ -1,7 +1,6 @@
 module QueryTests
 
 import Oracle
-import System
 import Utils
 
 %default total
@@ -23,13 +22,23 @@ test_QueryNoRows conn = do
         []
   case result of
     Left err   =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "QueryTests.test_QueryNoRows"
+                        False
     Right rows =>
       case rows of
         [] =>
           pure (Right ())
         _  =>
-          die "Expected query to return no rows."
+          pure $
+            Left $
+              MkOracleError (-1)
+                            "Expected query to return no rows"
+                            "QueryTests.test_QueryNoRows"
+                            False
 
 ||| Verify that a query returning exactly one row is decoded correctly.
 |||
@@ -48,13 +57,23 @@ test_QuerySingleRow conn = do
         []
   case result of
     Left err   =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "QueryTests.test_QuerySingleRow"
+                        False
     Right rows =>
       case rows of
         [[OracleString "Alice"]] =>
           pure (Right ())
         _                        =>
-          die "Expected exactly one row containing Alice."
+          pure $
+            Left $
+              MkOracleError (-1)
+                            "Expected exactly one row containing Alice"
+                            "QueryTests.test_QuerySingleRow"
+                            False
 
 ||| Verify that multiple rows are returned in the expected order.
 |||
@@ -73,7 +92,12 @@ test_QueryMultipleRows conn = do
         []
   case result of
     Left err   =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "QueryTests.test_QueryMultipleRows"
+                        False
     Right rows =>
       case rows of
         [ [OracleString "Alice"]
@@ -81,7 +105,12 @@ test_QueryMultipleRows conn = do
         ] =>
           pure (Right ())
         _ =>
-          die "Expected two rows (Alice, Bob)."
+          pure $
+            Left $
+              MkOracleError (-1)
+                            "Expected two rows (Alice, Bob)"
+                            "QueryTests.test_QueryMultipleRows"
+                            False
 
 ||| Verify that query fetches every row from the result set.
 |||
@@ -100,13 +129,23 @@ test_QueryAllRows conn = do
         []
   case result of
     Left err   =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "QueryTests.test_QueryAllRows"
+                        False
     Right rows =>
       case length rows == 2 of
         True  =>
           pure (Right ())
         False =>
-          die "Expected query to return every row."
+          pure $
+            Left $
+              MkOracleError (-1)
+                            "Expected query to return every row"
+                            "QueryTests.test_QueryAllRows"
+                            False
 
 ||| Verify that bind parameters participate correctly in query predicates.
 |||
@@ -128,10 +167,20 @@ test_QueryWithWhereClause conn = do
         ]
   case result of
     Left err   =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "QueryTests.test_QueryWithWhereClause"
+                        False
     Right rows =>
       case rows of
         [[OracleNumber 42.0]] =>
           pure (Right ())
         rows'            =>
-          die "Expected Bob's age to be returned."
+          pure $
+            Left $
+              MkOracleError (-1)
+                            "Expected Bob's age to be returned"
+                            "QueryTests.test_QueryWithWhereClause"
+                            False

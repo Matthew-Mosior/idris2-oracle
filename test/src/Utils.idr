@@ -26,10 +26,9 @@ ignoreMissingObject action = do
         False =>
           pure (Left err)
 
-||| Install the database schema required by the integration test suite.
+||| Setup the test user, and install the database schema required by the integration test suite.
 |||
-||| Any existing schema objects are dropped before being recreated so every
-||| test run starts from a known schema.
+||| Any existing schema objects are dropped before being recreated so every test run starts from a known schema.
 |||
 export
 installSchema : Connection -> IO (Either OracleError ())
@@ -60,7 +59,8 @@ installSchema conn =
     hire_timestamp      TIMESTAMP,
     meeting_time_tz     TIMESTAMP WITH TIME ZONE,
     vacation_length     INTERVAL YEAR(4) TO MONTH,
-    uptime              INTERVAL DAY(9) TO SECOND(9)
+    uptime              INTERVAL DAY(9) TO SECOND(9),
+    profile             JSON
     )
     """
     []
@@ -132,7 +132,8 @@ seedPeople conn =
         hire_timestamp,
         meeting_time_tz,
         vacation_length,
-        uptime
+        uptime,
+        profile
     )
     VALUES
     (
@@ -146,7 +147,8 @@ seedPeople conn =
         :hire_timestamp,
         :meeting_time_tz,
         :vacation_length,
-        :uptime
+        :uptime,
+        :profile
     )
     """
     [ MkBindParameter ":name"   (OracleString "Alice")
@@ -181,6 +183,8 @@ seedPeople conn =
                                       42
                                       555000000
                                 )
+    , MkBindParameter ":profile" ( OracleString "{\"department\":\"Engineering\",\"skills\":[\"Idris2\",\"Haskell\",\"C\"],\"active\":true}"
+                                 )
     ]
   >>== \_ =>
   execute_
@@ -198,7 +202,8 @@ seedPeople conn =
         hire_timestamp,
         meeting_time_tz,
         vacation_length,
-        uptime
+        uptime,
+        profile
     )
     VALUES
     (
@@ -212,7 +217,8 @@ seedPeople conn =
         :hire_timestamp,
         :meeting_time_tz,
         :vacation_length,
-        :uptime
+        :uptime,
+        :profile
     )
     """
     [ MkBindParameter ":name"   (OracleString "Bob")
@@ -247,6 +253,8 @@ seedPeople conn =
                                       59
                                       999999999
                                 )
+    , MkBindParameter ":profile" ( OracleString "{\"department\":\"Research\",\"skills\":[\"Python\",\"R\"],\"active\":false}"
+                                 )
     ]
 
 ||| Populate the BLOBS table with the standard integration test fixture.

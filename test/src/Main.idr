@@ -3,6 +3,7 @@ module Main
 import BindTests
 import ConnectInfoTest
 import ConnectionTests
+import JSONTests
 import Oracle
 import QueryTests
 import StatementTests
@@ -56,6 +57,14 @@ main = do
       test_QueryExactlyOneMissing conn >>== \_ =>
       test_QueryExactlyOneMultiple conn >>== \_ =>
       test_QueryTypedBlobs conn >>== \_ =>
+      test_QueryJSON conn >>== \_ =>
+      test_QueryJSONList conn >>== \_ =>
+      test_QueryJSONRows conn >>== \_ =>
+      test_QueryJSONNoRows conn >>== \_ =>
+      test_QueryJSONListWithBind conn >>== \_ =>
+      test_QueryJSONAs conn >>== \_ =>
+      test_QueryJSONListAs conn >>== \_ =>
+      test_QueryJSONAsList conn >>== \_ =>
       test_CommitPersistsChanges conn >>== \_ =>
       test_RollbackDiscardsChanges conn >>== \_ =>
       test_CommitPersistsUpdate conn >>== \_ =>

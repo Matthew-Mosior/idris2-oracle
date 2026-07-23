@@ -4,7 +4,6 @@ import Data.ByteString
 import Derive.Prelude
 import Oracle
 import Oracle.Types.DateTime
-import System
 import Utils
 
 %language ElabReflection
@@ -225,7 +224,12 @@ test_QueryTypedPeople conn = do
         []
   case result of
     Left err   =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TypedEncodingDecodingTests.test_QueryTypedPeople"
+                        False
     Right rows =>
       case rows of
         [ MkPersonRow "Alice"
@@ -246,10 +250,15 @@ test_QueryTypedPeople conn = do
                       (MkOracleTimestampTZ 2025 1 1 0 0 0 0 (-5) 0)
                       (MkOracleIntervalYM 15 3)
                       (MkOracleIntervalDS 365 23 59 59 999999999)
-        ] =>
+        ]     =>
           pure (Right ())
-        _ =>
-          die "Unexpected decoded people."
+        rows' =>
+          pure $
+            Left $
+              MkOracleError (-1)
+                            ("Unexpected decoded people: " ++ show rows')
+                            "TypedEncodingDecodingTests.test_QueryTypedPeople"
+                            False
 
 export covering
 test_QueryOneTyped : Connection -> IO (Either OracleError ())
@@ -276,11 +285,21 @@ test_QueryOneTyped conn = do
         [MkBindParameter ":name" (OracleString "Bob")]
   case result of
     Left err                                          =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TypedEncodingDecodingTests.test_QueryOneTyped"
+                        False
     Right (Just (MkPersonRow "Bob" 42 _ _ _ _ _ _ _)) =>
       pure (Right ())
     Right value                                       =>
-      die "Expected Bob."
+      pure $
+        Left $
+          MkOracleError (-1)
+                        "Expected Bob"
+                        "TypedEncodingDecodingTests.test_QueryOneTyped"
+                        False
 
 export covering
 test_QueryOneMissing : Connection -> IO (Either OracleError ())
@@ -309,9 +328,19 @@ test_QueryOneMissing conn = do
     Right Nothing =>
       pure (Right ())
     Right _       =>
-      die "Expected Nothing."
+      pure $
+        Left $
+          MkOracleError (-1)
+                        "Expected Nothing"
+                        "TypedEncodingDecodingTests.test_QueryOneMissing"
+                        False
     Left err      =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TypedEncodingDecodingTests.test_QueryOneMissing"
+                        False
 
 export covering
 test_QueryExactlyOneTyped : Connection -> IO (Either OracleError ())
@@ -339,10 +368,20 @@ test_QueryExactlyOneTyped conn = do
   case result of
     Right (MkPersonRow "Alice" 30 _ _ _ _ _ _ _) =>
       pure (Right ())
-    Right _                                      =>
-      die "Unexpected row."
+    Right row                                    =>
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Unexpected row: " ++ show row)
+                        "TypedEncodingDecodingTests.test_QueryExactlyOneTyped"
+                        False
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TypedEncodingDecodingTests.test_QueryExactlyOneTyped"
+                        False
 
 export covering
 test_QueryExactlyOneMissing : Connection -> IO (Either OracleError ())
@@ -371,7 +410,12 @@ test_QueryExactlyOneMissing conn = do
     Left _  =>
       pure (Right ())
     Right _ =>
-      die "Expected failure."
+      pure $
+        Left $
+          MkOracleError (-1)
+                        "Expected failure"
+                        "TypedEncodingDecodingTests.test_QueryExactlyOneMissing"
+                        False
 
 export covering
 test_QueryExactlyOneMultiple : Connection -> IO (Either OracleError ())
@@ -396,10 +440,15 @@ test_QueryExactlyOneMultiple conn = do
         """
         []
   case result of
-    Left _  =>
+    Left _     =>
       pure (Right ())
-    Right _ =>
-      die "Expected multiple-row failure."
+    Right rows =>
+      pure $
+        Left $
+          MkOracleError (-1)
+                        ("Expected mutiple-row failure: " ++ show rows)
+                        "TypedEncodingDecodingTests.test_QueryExactlyOneMultiple"
+                        False
 
 export covering
 test_QueryTypedBlobs : Connection -> IO (Either OracleError ())
@@ -417,12 +466,22 @@ test_QueryTypedBlobs conn = do
         []
   case result of
     Left err   =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "TypedEncodingDecodingTests.test_QueryTypedBlobs"
+                        False
     Right rows =>
       case rows == [ MkBlobsRow (pack [0x46, 0x46])
                    , MkBlobsRow (fromString "FF")
                    ] of
         True  =>
           pure (Right ())
-        False => 
-          die "Unexpected blobs."
+        False =>
+          pure $
+            Left $
+              MkOracleError (-1)
+                            "Unexpected blobs"
+                            "TypedEncodingDecodingTests.test_QueryTypedBlobs"
+                            False

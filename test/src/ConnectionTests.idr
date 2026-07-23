@@ -2,7 +2,6 @@ module ConnectionTests
 
 import ConnectInfoTest
 import Oracle
-import System
 
 ||| Verify that a connection can be opened using valid credentials.
 |||
@@ -14,7 +13,12 @@ test_OpenConnection cfg = do
   result <- connect cfg
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "ConnectionTests.test_OpenConnection"
+                        False
     Right conn => do
       _ <- disconnect conn
       pure (Right ())
@@ -34,7 +38,12 @@ test_WithConnection cfg = do
         []
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "ConnectionTests.test_WithConnection"
+                        False
     Right () =>
       pure (Right ())
 
@@ -55,7 +64,12 @@ test_SequentialConnections cfg = do
       result <- connect cfg
       case result of
         Left err   =>
-          die (show err)
+          pure $
+            Left $
+              MkOracleError (-1)
+                            (show err)
+                            "ConnectionTests.test_SequentialConnections"
+                            False
         Right conn => do
           _ <- disconnect conn
           loop k
@@ -73,7 +87,12 @@ test_InvalidPassword cfg = do
       pure (Right ())
     Right conn => do
       _ <- disconnect conn
-      die "Connection unexpectedly succeeded."
+      pure $
+        Left $
+          MkOracleError (-1)
+                        "Connection unexpectedly succeeded"
+                        "ConnectionTests.test_InvalidPassword"
+                        False
 
 ||| Verify that connecting to an unknown Oracle service returns an error.
 |||
@@ -87,4 +106,9 @@ test_InvalidService cfg = do
       pure (Right ())
     Right conn => do
       _ <- disconnect conn
-      die "Connection unexpectedly succeeded."
+      pure $
+        Left $
+          MkOracleError (-1)
+                        "Connection unexpectedly succeeded"
+                        "ConnectionTests.test_InvalidPassword"
+                        False

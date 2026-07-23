@@ -9,6 +9,7 @@ depends    = base
            , bytestring
            , elab-util
            , elin
+           , json
            , ref1
 modules    = Oracle
            , Oracle.Connection
@@ -27,18 +28,20 @@ modules    = Oracle
            , Oracle.FFI.QueryInfo
            , Oracle.FFI.Statement
            , Oracle.FFI.Transaction
+           , Oracle.Internal.Context
            , Oracle.Internal.Decode
            , Oracle.Internal.Either
+           , Oracle.Internal.JSONQuery
            , Oracle.Internal.Lob
            , Oracle.Internal.QueryInfo
            , Oracle.Internal.Pointer
            , Oracle.Types.BindParameter
            , Oracle.Types.ColumnInfo
            , Oracle.Types.ConnectInfo
-           , Oracle.Types.Context
            , Oracle.Types.DateTime
            , Oracle.Types.Error
            , Oracle.Types.Instances
+           , Oracle.Types.JSONQuery
            , Oracle.Types.OracleType
            , Oracle.Types.Row
            , Oracle.Types.Value

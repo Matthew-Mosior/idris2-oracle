@@ -11,5 +11,6 @@ import public Oracle.Types.BindParameter
 import public Oracle.Types.ConnectInfo
 import public Oracle.Types.DateTime
 import public Oracle.Types.Error
+import public Oracle.Types.JSONQuery
 import public Oracle.Types.Row
 import public Oracle.Types.Value
