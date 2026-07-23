@@ -1,7 +1,6 @@
 module StatementTests
 
 import Oracle
-import System
 
 %default total
 
@@ -18,7 +17,12 @@ test_Prepare conn = do
     "SELECT 1 FROM dual"
   case result of
     Left err   =>
-      pure (Left err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "StatementTests.test_Prepare"
+                        False
     Right stmt => do
       release stmt
       pure (Right ())
@@ -36,7 +40,12 @@ test_Release conn = do
     "SELECT 1 FROM dual"
   case result of
     Left err   =>
-      pure (Left err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "StatementTests.test_Release"
+                        False
     Right stmt => do
       release stmt
       pure (Right ())
@@ -57,7 +66,12 @@ test_WithStatement conn = do
       )
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "StatementTests.test_WithStatement"
+                        False
     Right () =>
       pure (Right ())
 
@@ -74,7 +88,12 @@ test_Execute conn = do
     "SELECT 1 FROM dual"
   case result of
     Left err =>
-      pure (Left err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "StatementTests.test_Execute"
+                        False
     Right stmt => do
       executed <- execute stmt
       release stmt
@@ -93,7 +112,12 @@ test_ReuseStatement conn = do
     "SELECT 1 FROM dual"
   case result of
     Left err =>
-      pure (Left err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "StatementTests.test_ReuseStatement"
+                        False
     Right stmt => do
       let
         loop : Nat -> IO (Either OracleError ())
@@ -103,7 +127,12 @@ test_ReuseStatement conn = do
           res <- execute stmt
           case res of
             Left err =>
-              pure (Left err)
+              pure $
+                Left $
+                  MkOracleError (-1)
+                                (show err)
+                                "StatementTests.test_ReuseStatement"
+                                False
             Right () =>
               loop k
       executed <- loop 10
@@ -129,14 +158,24 @@ test_SequentialStatements conn = do
           "SELECT 1 FROM dual"
         case prepared of
           Left err =>
-            pure (Left err)
+            pure $
+              Left $
+                MkOracleError (-1)
+                              (show err)
+                              "StatementTests.test_SequentialStatements"
+                              False
           Right stmt => do
             release stmt
             loop k
       in loop 100
   case result of
     Left err =>
-      die (show err)
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "StatementTests.test_SequentialStatements"
+                        False
     Right () =>
       pure (Right ())
 
@@ -150,20 +189,36 @@ test_ConcurrentStatements conn = do
   result <-
     prepare conn "SELECT 1 FROM dual"
   case result of
-    Left err => pure (Left err)
+    Left err =>
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "StatementTests.test_ConcurrentStatements"
+                        False
     Right st1 => do
       s2 <- prepare conn "SELECT 1 FROM dual"
       case s2 of
         Left err => do
           release st1
-          pure (Left err)
+          pure $
+            Left $
+              MkOracleError (-1)
+                            (show err)
+                            "StatementTests.test_ConcurrentStatements"
+                            False
         Right st2 => do
           s3 <- prepare conn "SELECT 1 FROM dual"
           case s3 of
             Left err => do
               release st1
               release st2
-              pure (Left err)
+              pure $
+                Left $
+                  MkOracleError (-1)
+                                (show err)
+                                "StatementTests.test_ConcurrentStatements"
+                                False
             Right st3 => do
               s4 <- prepare conn "SELECT 1 FROM dual"
               case s4 of
@@ -171,7 +226,12 @@ test_ConcurrentStatements conn = do
                   release st1
                   release st2
                   release st3
-                  pure (Left err)
+                  pure $
+                    Left $
+                      MkOracleError (-1)
+                                    (show err)
+                                    "StatementTests.test_ConcurrentStatements"
+                                    False
                 Right st4 => do
                   s5 <- prepare conn "SELECT 1 FROM dual"
                   case s5 of
@@ -180,7 +240,12 @@ test_ConcurrentStatements conn = do
                       release st2
                       release st3
                       release st4
-                      pure (Left err)
+                      pure $
+                        Left $
+                          MkOracleError (-1)
+                                        (show err)
+                                        "StatementTests.test_ConcurrentStatements"
+                                        False
                     Right st5 => do
                       r1 <- execute st1
                       r2 <- execute st2
@@ -193,18 +258,48 @@ test_ConcurrentStatements conn = do
                       release st4
                       release st5
                       case r1 of
-                        Left err => pure (Left err)
+                        Left err =>
+                          pure $
+                            Left $
+                              MkOracleError (-1)
+                                            (show err)
+                                            "StatementTests.test_ConcurrentStatements"
+                                            False
                         Right () =>
                           case r2 of
-                            Left err => pure (Left err)
+                            Left err =>
+                              pure $
+                                Left $
+                                  MkOracleError (-1)
+                                                (show err)
+                                                "StatementTests.test_ConcurrentStatements"
+                                                False
                             Right () =>
                               case r3 of
-                                Left err => pure (Left err)
+                                Left err =>
+                                  pure $
+                                    Left $
+                                      MkOracleError (-1)
+                                                    (show err)
+                                                    "StatementTests.test_ConcurrentStatements"
+                                                    False
                                 Right () =>
                                   case r4 of
-                                    Left err => pure (Left err)
+                                    Left err =>
+                                      pure $
+                                        Left $
+                                          MkOracleError (-1)
+                                                        (show err)
+                                                        "StatementTests.test_ConcurrentStatements"
+                                                        False
                                     Right () =>
                                       case r5 of
-                                        Left err => pure (Left err)
+                                        Left err =>
+                                          pure $
+                                            Left $
+                                              MkOracleError (-1)
+                                                            (show err)
+                                                            "StatementTests.test_ConcurrentStatements"
+                                                            False
                                         Right () =>
                                           pure (Right ())
