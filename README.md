@@ -1082,6 +1082,7 @@ During testing the suite creates a small schema containing representative Oracle
 - intervals
 - CLOBs
 - BLOBs
+- JSON
 
 Before each test the database is reset to a known state.
 
