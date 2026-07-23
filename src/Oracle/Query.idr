@@ -5,9 +5,11 @@ import Oracle.Statement
 import Oracle.Internal.Either
 import Oracle.Internal.JSONQuery
 import Oracle.Internal.Pointer
+import Oracle.Internal.Query
 import Oracle.Types.BindParameter
 import Oracle.Types.Error
 import Oracle.Types.JSONQuery
+import Oracle.Types.Query
 import Oracle.Types.Row
 import Oracle.Types.Value
 
@@ -201,6 +203,50 @@ queryExactlyOne conn sql params = do
             "Expected exactly one row but query returned multiple rows"
             "Oracle.Query.queryExactlyOne"
             False
+
+--------------------------------------------------------------------------------
+--          Structured Query
+--------------------------------------------------------------------------------
+
+||| Execute a structured Query and decode every returned row.
+|||
+||| The SQL statement is constructed using `buildQuerySQL`, which renders each `QueryColumn` in the SELECT projection.
+|||
+||| Ordinary columns are rendered unchanged, while `JSONColumn` expressions are wrapped with `JSON_SERIALIZE(... RETURNING CLOB)`.
+|||
+||| Each returned row is decoded using the `FromRow` implementation for the requested result type.
+|||
+||| If the query returns no rows, this function succeeds with an empty list.
+|||
+||| Any Oracle error encountered while preparing, binding, executing, or fetching the query is returned as `Left OracleError`.
+|||
+export covering
+queryAs : FromRow a => Connection -> Query -> IO (Either OracleError (List a))
+queryAs conn query =
+  query_ conn (buildQuerySQL query) (binds query)
+
+||| Execute a structured Query and decode exactly one returned row.
+|||
+||| The SQL statement is constructed using `buildQuerySQL`, which renders each `QueryColumn` in the SELECT projection.
+|||
+||| Ordinary columns are rendered unchanged, while `JSONColumn` expressions are wrapped with `JSON_SERIALIZE(... RETURNING CLOB)`.
+|||
+||| The returned row is decoded using the `FromRow` implementation for the requested result type.
+|||
+||| This function succeeds only when the query returns exactly one row.
+|||
+||| It returns an `OracleError` if the query returns no rows or more than one row.
+|||
+||| Any Oracle error encountered while preparing, binding, executing, or fetching the query is returned as `Left OracleError`.
+|||
+export covering
+queryOneAs : FromRow a => Connection -> Query -> IO (Either OracleError a)
+queryOneAs conn query =
+  queryExactlyOne conn (buildQuerySQL query) (binds query)
+
+--------------------------------------------------------------------------------
+--          JSON Query
+--------------------------------------------------------------------------------
 
 ||| Execute a JSON query and return the serialized JSON document.
 |||

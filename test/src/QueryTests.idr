@@ -1,6 +1,7 @@
 module QueryTests
 
 import Oracle
+import PersonRow
 import Utils
 
 %default total
@@ -184,3 +185,93 @@ test_QueryWithWhereClause conn = do
                             "Expected Bob's age to be returned"
                             "QueryTests.test_QueryWithWhereClause"
                             False
+
+||| Verify that queryAs decodes every returned row using the existing PersonRow FromRow implementation.
+|||
+export covering
+test_QueryAs : Connection -> IO (Either OracleError ())
+test_QueryAs conn = do
+  resetDatabase conn >>== \_ => do
+    people : Either OracleError (List PersonRow) <-
+      queryAs
+        conn
+        ( MkQuery
+            [ Column "name"
+            , Column "age"
+            , Column "salary"
+            , Column "active"
+            , Column "notes"
+            , Column "hire_timestamp"
+            , Column "meeting_time_tz"
+            , Column "vacation_length"
+            , Column "uptime"
+            ]
+            "people ORDER BY id"
+            []
+        )
+    case people of
+      Right [ alice, bob ] =>
+        case (alice.name, alice.age, bob.name, bob.age) of
+          ("Alice", 30.0, "Bob", 42.0) =>
+            pure (Right ())
+          _                            =>
+            pure $
+              Left $
+                MkOracleError
+                  (-1)
+                  "Expected Alice and Bob to be decoded correctly"
+                  "QueryTests.test_QueryAs"
+                  False
+      _                    =>
+        pure $
+          Left $
+            MkOracleError
+              (-1)
+              "Expected exactly two PersonRow values"
+              "QueryTests.test_QueryAs"
+              False
+
+||| Verify that queryOneAs decodes a single row using the existing PersonRow FromRow implementation.
+|||
+export covering
+test_QueryOneAs : Connection -> IO (Either OracleError ())
+test_QueryOneAs conn = do
+  resetDatabase conn >>== \_ => do
+    person : Either OracleError PersonRow <-
+      queryOneAs
+        conn
+        ( MkQuery
+            [ Column "name"
+            , Column "age"
+            , Column "salary"
+            , Column "active"
+            , Column "notes"
+            , Column "hire_timestamp"
+            , Column "meeting_time_tz"
+            , Column "vacation_length"
+            , Column "uptime"
+            ]
+            "people WHERE name = 'Alice'"
+            []
+        )
+    case person of
+      Right person' =>
+        case (person'.name, person'.age) of
+          ("Alice", 30.0) =>
+            pure (Right ())
+          _               =>
+            pure $
+              Left $
+                MkOracleError
+                  (-1)
+                  "Wrong data for Alice"
+                  "QueryTests.test_QueryOneAs"
+                  False
+      _             =>
+        pure $
+          Left $
+            MkOracleError
+              (-1)
+              "Expected PersonRow for Alice"
+              "QueryTests.test_QueryOneAs"
+              False
