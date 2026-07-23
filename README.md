@@ -3,7 +3,7 @@
 This library provides a modern Oracle Database client library for Idris2 built on top of Oracle's [ODPI-C API](https://github.com/oracle/odpi). It combines a low-level FFI with a high-level, type-safe API supporting prepared statements, transactions, typed row decoding, LOBs, and Oracle-native data types, allowing Idris2 applications to interact with Oracle databases safely and efficiently.
 
 > [!NOTE]
-> The internals of this library heavily utilize the [idris2-ref1](https://github.com/stefan-hoeck/idris2-ref1) and [idris2-elin](https://github.com/stefan-hoeck/idris2-elin) libraries, so you may want to familiarize yourself with them first.
+> The internals of this library heavily utilize the [idris2-ref1](https://github.com/stefan-hoeck/idris2-ref1), [idris2-elin](https://github.com/stefan-hoeck/idris2-elin) and [idris2-json](https://github.com/stefan-hoeck/idris2-json/tree/main) libraries, so you may want to familiarize yourself with them first.
 
 ## Building
 
@@ -37,6 +37,7 @@ Running `make install` installs the library.
   - `TIMESTAMP WITH TIME ZONE`
   - `INTERVAL YEAR TO MONTH`
   - `INTERVAL DAY TO SECOND`
+  - `JSON` (via `idris2-json`)
 - **Typed decoding**
   - Automatic conversion from Oracle values to Idris types via `FromOracle`
   - Automatic row decoding via `FromRow`
