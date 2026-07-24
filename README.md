@@ -1188,7 +1188,7 @@ The selected expressions are therefore:
 
 The resulting row can then be decoded into an Idris record containing both ordinary fields and JSON-derived fields.
 
-## Typed Queries
+## queryAs and queryOneAs
 
 The typed query API allows query results to be decoded directly into Idris data types.
 
