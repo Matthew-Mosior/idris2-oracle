@@ -1057,8 +1057,9 @@ This separation keeps database-specific logic isolated from application code.
 The query API provides two levels of access to Oracle query results.
 
 At the lower level, queries return Oracle values directly:
--   `query` retrieves all rows
--   `queryOne` retrieves a single row
+
+- `query` retrieves all rows
+- `queryOne` retrieves a single row
 
 At the higher level, `queryAs` and `queryOneAs` decode query results directly into user-defined Idris types using the `FromOracle` interface.
 
@@ -1180,9 +1181,10 @@ MkQuery
 ```
 
 The selected expressions are therefore:
-1.  `id` — ordinary Oracle value
-2.  `profile` — JSON value serialized to a CLOB
-3.  `name` — ordinary Oracle value
+
+1. `id` — ordinary Oracle value
+2. `profile` — JSON value serialized to a CLOB
+3. `name` — ordinary Oracle value
 
 The resulting row can then be decoded into an Idris record containing both ordinary fields and JSON-derived fields.
 
@@ -1320,12 +1322,13 @@ WHERE name = :name
 The serialized JSON is retrieved as a CLOB, converted to an Idris `String`, and then passed through the normal `FromOracle` decoding pipeline.
 
 This design has several advantages:
--   JSON-specific SQL generation remains inside the query layer.
--   The C shim does not require JSON-specific logic.
--   JSON values use the existing CLOB retrieval mechanism.
--   A single query can mix JSON and non-JSON columns.
--   Typed queries can decode JSON directly into nested Idris data types.
--   `queryAs` and `queryOneAs` provide the same API regardless of whether a result contains JSON columns.
+
+- JSON-specific SQL generation remains inside the query layer.
+- The C shim does not require JSON-specific logic.
+- JSON values use the existing CLOB retrieval mechanism.
+- A single query can mix JSON and non-JSON columns.
+- Typed queries can decode JSON directly into nested Idris data types.
+- `queryAs` and `queryOneAs` provide the same API regardless of whether a result contains JSON columns.
 
 The user therefore only needs to indicate which selected expressions contain JSON.
 
@@ -1400,11 +1403,13 @@ This allows JSON stored in Oracle to be treated as a normal typed component of a
 The two query APIs serve different purposes.
 
 ### Raw query API
+
 Use `query` and `queryOne` when:
--   The result shape is dynamic
--   The caller needs to inspect Oracle values directly
--   The result does not map naturally to a predefined Idris record
--   The caller wants to perform custom decoding
+
+- The result shape is dynamic
+- The caller needs to inspect Oracle values directly
+- The result does not map naturally to a predefined Idris record
+- The caller wants to perform custom decoding
 
 Example:
 
@@ -1424,10 +1429,11 @@ This returns raw Oracle values.
 ### Typed query API
 
 Use `queryAs` and `queryOneAs` when:
--   The result shape is known
--   The caller has an Idris record representing the row
--   JSON should be decoded into nested Idris types
--   The application wants compile-time structure around query results
+
+- The result shape is known
+- The caller has an Idris record representing the row
+- JSON should be decoded into nested Idris types
+- The application wants compile-time structure around query results
 
 Example:
 
@@ -1449,16 +1455,16 @@ The typed API is generally preferred for application-level code, while the raw A
 
 The `Query` and `QueryColumn` abstractions intentionally separate three concerns:
 
-1.  **What is selected**
-    
+1. **What is selected**
+
     Represented by `QueryColumn`.
-    
-2.  **How rows are located**
-    
+
+2. **How rows are located**
+
     Represented by `querybody`.
-    
-3.  **How bind parameters are supplied**
-    
+
+3. **How bind parameters are supplied**
+
     Represented by `binds`.
 
 This separation allows the query layer to transform special column types, such as JSON, without requiring callers to manually construct database-specific SQL.
