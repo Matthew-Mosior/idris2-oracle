@@ -1065,7 +1065,7 @@ At the higher level, `queryAs` and `queryOneAs` decode query results directly in
 
 Queries are represented by the `Query` record, while individual selected expressions are represented by `QueryColumn`.
 
-### `Query`
+### Query
 
 A `Query` describes a complete SQL query:
 
@@ -1106,7 +1106,7 @@ ORDER BY id
 
 The `Query` abstraction allows the query execution layer to know how each selected expression should be retrieved and decoded.
 
-### `QueryColumn`
+### QueryColumn
 
 A `QueryColumn` describes one expression in the `SELECT` list.
 
