@@ -816,25 +816,57 @@ The primary query functions are:
 ```idris
 query
     : Connection
-   -> Query
-   -> IO (Either OracleError (List (List OracleValue)))
+    -> Sting
+    -> List BindParameter
+    -> IO (Either OracleError (List (List OracleValue)))
 
 queryOne
-    : Connection
-   -> Query
-   -> IO (Either OracleError (List OracleValue))
+    : FromRow a
+    => Connection
+    -> String
+    -> List BindParameter
+    -> IO (Either OracleError (Maybe a))
+
+queryExactlyOne
+    :  FromRow a
+    => Connection
+    -> String
+    -> List BindParameter
+    -> IO (Either OracleError a)
 
 queryAs
-    : FromOracle a
+    :  FromRow a
     => Connection
     -> Query
     -> IO (Either OracleError (List a))
 
 queryOneAs
-    : FromOracle a
+    :  FromRow a
     => Connection
     -> Query
     -> IO (Either OracleError a)
+
+queryJSON
+    :  Connection
+    -> JSONQuery
+    -> IO (Either OracleError String)
+
+queryJSONList
+    :  Connection
+    -> JSONQuery
+    -> IO (Either OracleError (List String))
+
+queryJSONAs
+    :  FromJSON a
+    => Connection
+    -> JSONQuery
+    -> IO (Either OracleError a)
+
+queryJSONListAs
+    :  FromJSON a
+    => Connection
+    -> JSONQuery
+    -> IO (Either OracleError (List a))
 ```
 
 The exact result type of each function depends on whether the caller wants raw Oracle values or typed Idris values, and whether the query is expected to return multiple rows or a single row.
@@ -1028,7 +1060,7 @@ The typed query API consists of:
 
 ```idris
 queryAs
-    : FromOracle a
+    :  FromRow a
     => Connection
     -> Query
     -> IO (Either OracleError (List a))
@@ -1038,13 +1070,13 @@ and:
 
 ```idris
 queryOneAs
-    : FromOracle a
+    :  FromRow a
     => Connection
     -> Query
     -> IO (Either OracleError a)
 ```
 
-A type used with these functions must have an appropriate `FromOracle` implementation.
+A type used with these functions must have an appropriate `FromRow` implementation.
 
 For example:
 
@@ -1057,7 +1089,7 @@ record Person where
   profile : Profile
 ```
 
-Assuming an appropriate `FromOracle Person` implementation exists, the query can be written as:
+Assuming an appropriate `FromRow Person` implementation exists, the query can be written as:
 
 ```idris
 queryAs
@@ -1097,7 +1129,7 @@ When a query is expected to return one row, the library provides `queryOneAs`:
 
 ```idris
 queryOneAs
-    : FromOracle a
+    :  FromRow a
     => Connection
     -> Query
     -> IO (Either OracleError a)
