@@ -966,7 +966,7 @@ MkQuery
   []
 ```
 
-is logically equivalent to:
+Is logically equivalent to:
 
 ```sql
 SELECT
@@ -1194,7 +1194,7 @@ For ordinary expressions:
 QueryColumn "name"
 ```
 
-the expression is selected directly.
+The expression is selected directly.
 
 For JSON expressions:
 
@@ -1202,7 +1202,7 @@ For JSON expressions:
 QueryColumnJSON "profile"
 ```
 
-the query layer generates:
+The query layer generates:
 
 ```sql
 JSON_SERIALIZE(profile RETURNING CLOB)
@@ -1326,7 +1326,7 @@ The result is decoded into:
 PersonProfile
 ```
 
-with the nested JSON document decoded into:
+With the nested JSON document decoded into:
 
 ```idris
 Profile
@@ -1413,7 +1413,7 @@ For example, JSON columns are transformed using:
 JSON_SERIALIZE(expression RETURNING CLOB)
 ```
 
-while the remainder of the query remains unchanged.
+While the remainder of the query remains unchanged.
 
 The resulting architecture is:
 
