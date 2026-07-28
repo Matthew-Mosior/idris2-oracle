@@ -15,6 +15,7 @@ modules    = Oracle
            , Oracle.Connection
            , Oracle.Context
            , Oracle.Error
+           , Oracle.Migration
            , Oracle.Query
            , Oracle.Statement
            , Oracle.Transaction
@@ -36,6 +37,7 @@ modules    = Oracle
            , Oracle.Internal.QueryInfo
            , Oracle.Internal.Pointer
            , Oracle.Internal.Query
+           , Oracle.Migration.Runner
            , Oracle.Types.BindParameter
            , Oracle.Types.ColumnInfo
            , Oracle.Types.ConnectInfo
@@ -43,6 +45,7 @@ modules    = Oracle
            , Oracle.Types.Error
            , Oracle.Types.Instances
            , Oracle.Types.JSONQuery
+           , Oracle.Types.Migration
            , Oracle.Types.OracleType
            , Oracle.Types.Query
            , Oracle.Types.QueryColumn
