@@ -1,6 +1,7 @@
 module Oracle.Types.Migration
 
 import Data.List
+import Oracle.Internal.Pointer
 import Oracle.Types.Error
 
 %default total
@@ -24,8 +25,8 @@ record Migration where
   constructor MkMigration
   migrationversion : Int
   migrationname    : String
-  migrationup      : IO (Either OracleError ())
-  migrationdown    : IO (Either OracleError ())
+  migrationup      : Connection -> IO (Either OracleError ())
+  migrationdown    : Connection -> IO (Either OracleError ())
 
 ||| Information about a migration that has been recorded in the database.
 |||

@@ -10,7 +10,7 @@ import Oracle.Types.Migration
 |||
 export
 migrationtable : String
-migrationtable = "__idris_migrations"
+migrationtable = "idris_oracle_migrations"
 
 ||| Create the migration history table if it does not already exist.
 |||
@@ -243,13 +243,13 @@ runMigrations conn migrations = do
         Left err      =>
           pure (Left err)
         Right pending =>
-          runPending pending
+          runPending conn pending
   where
-    runPending : List Migration -> IO (Either OracleError ())
-    runPending []                        =
+    runPending : Connection -> List Migration -> IO (Either OracleError ())
+    runPending _    []                        =
       pure (Right ())
-    runPending (migration :: migrations) = do
-      result <- migrationup migration
+    runPending conn (migration :: migrations) = do
+      result <- (migrationup migration) conn
       case result of
         Left err =>
           pure (Left err)
@@ -264,7 +264,7 @@ runMigrations conn migrations = do
                 Left err =>
                   pure (Left err)
                 Right () =>
-                  runPending migrations
+                  runPending conn migrations
 
 ||| Roll back the most recently applied migration.
 |||
@@ -319,7 +319,7 @@ rollbackMigration conn migrations = do
                         "Oracle.Migration.Runner.rollbackMigration"
                         False
                 Just migration =>
-                  rollback migration
+                  rollback conn migration
   where
     latestMigration : List MigrationInfo -> Maybe MigrationInfo
     latestMigration []              =
@@ -345,9 +345,9 @@ rollbackMigration conn migrations = do
           Just migration
         False =>
           findMigration migrationinfo migrations
-    rollback : Migration -> IO (Either OracleError ())
-    rollback migration = do
-      result <- migrationdown migration
+    rollback : Connection -> Migration -> IO (Either OracleError ())
+    rollback conn migration = do
+      result <- (migrationdown migration) conn
       case result of
         Left err =>
           pure (Left err)
