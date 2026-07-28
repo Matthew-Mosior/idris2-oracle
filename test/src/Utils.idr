@@ -130,8 +130,7 @@ clearMigrationHistory conn =
 
 ||| Reset the database objects used by the migration integration tests.
 |||
-||| This removes both the migration history and the schema objects created
-||| by the test migrations.
+||| This removes both the migration history and the schema objects created by the test migrations.
 |||
 export
 resetMigrationTests : Connection -> IO (Either OracleError ())
