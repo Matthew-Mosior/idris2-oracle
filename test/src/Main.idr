@@ -4,6 +4,7 @@ import BindTests
 import ConnectInfoTest
 import ConnectionTests
 import JSONTests
+import MigrationTests
 import Oracle
 import QueryTests
 import StatementTests
@@ -67,6 +68,19 @@ main = do
       test_QueryJSONAs conn >>== \_ =>
       test_QueryJSONListAs conn >>== \_ =>
       test_QueryJSONAsList conn >>== \_ =>
+      resetMigrationTests conn >>== \_ =>
+      test_MigrationInitialState conn >>== \_ =>
+      test_PendingMigrations conn >>== \_ =>
+      test_RunMigrations conn >>== \_ =>
+      test_AppliedMigrations conn >>== \_ =>
+      test_MigrationStatusApplied conn >>== \_ =>
+      test_MigrationSchema conn >>== \_ =>
+      test_RollbackMigration002 conn >>== \_ =>
+      test_AfterRollback conn >>== \_ =>
+      test_SchemaAfterRollback conn >>== \_ =>
+      test_PendingAfterRollback conn >>== \_ =>
+      test_RerunMigrations conn >>== \_ =>
+      test_FinalState conn >>== \_ =>
       test_CommitPersistsChanges conn >>== \_ =>
       test_RollbackDiscardsChanges conn >>== \_ =>
       test_CommitPersistsUpdate conn >>== \_ =>
