@@ -68,6 +68,7 @@ main = do
       test_QueryJSONAs conn >>== \_ =>
       test_QueryJSONListAs conn >>== \_ =>
       test_QueryJSONAsList conn >>== \_ =>
+      resetMigrationTests conn >>== \_ =>
       test_MigrationInitialState conn >>== \_ =>
       test_PendingMigrations conn >>== \_ =>
       test_RunMigrations conn >>== \_ =>

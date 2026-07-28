@@ -112,6 +112,35 @@ clearTables conn =
     >>== \_ =>
   execute_ conn "TRUNCATE TABLE people" []
 
+||| Remove all migration history for the integration test suite.
+|||
+||| This is test infrastructure only.
+|||
+||| Production applications should never clear the migration history table as part of normal schema installation.
+|||
+export
+clearMigrationHistory : Connection -> IO (Either OracleError ())
+clearMigrationHistory conn =
+  execute_
+    conn
+    "DELETE FROM idris_oracle_migrations"
+    []
+  >>== \_ =>
+  commit conn
+
+||| Reset the database objects used by the migration integration tests.
+|||
+||| This removes both the migration history and the schema objects created
+||| by the test migrations.
+|||
+export
+resetMigrationTests : Connection -> IO (Either OracleError ())
+resetMigrationTests conn =
+  ignoreMissingObject
+    (execute_ conn "DROP TABLE migration_people CASCADE CONSTRAINTS" [])
+  >>== \_ =>
+  clearMigrationHistory conn
+
 ||| Populate the PEOPLE table with the standard integration test fixture.
 |||
 export
