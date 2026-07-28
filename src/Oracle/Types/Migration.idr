@@ -11,14 +11,14 @@ import Oracle.Types.Error
 ||| Migrations are defined entirely through the Idris API. There are no
 ||| migration files or filesystem-based migration discovery mechanisms.
 |||
-||| `version` must uniquely identify the migration within a migration set.
+||| `migrationversion` must uniquely identify the migration within a migration set.
 ||| Migrations are normally applied in ascending version order.
 |||
-||| `name` provides a human-readable description of the migration.
+||| `migrationname` provides a human-readable description of the migration.
 |||
-||| `up` applies the migration.
+||| `migrationup` applies the migration.
 |||
-||| `down` reverses the migration.
+||| `migrationdown` reverses the migration.
 |||
 public export
 record Migration where
