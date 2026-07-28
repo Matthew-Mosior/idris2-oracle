@@ -6,39 +6,40 @@ import Oracle.Types.Migration
 
 %default total
 
-||| Name of the table used to persist migration history.
+||| Ensure that the migration history table exists.
 |||
-export
-migrationtable : String
-migrationtable = "idris_oracle_migrations"
+||| The migration table is created automatically the first time any migration
+||| operation is performed.
+|||
+export covering
+ensureMigrationTable : Connection -> IO (Either OracleError ())
+ensureMigrationTable conn = do
+  result <- queryRaw conn
+                     """
+                     SELECT table_name
+                     FROM user_tables
+                     WHERE table_name = 'IDRIS_ORACLE_MIGRATIONS'
+                     """
+                     []
 
-||| Create the migration history table if it does not already exist.
-|||
-||| The migration table is owned by the application database schema and is managed entirely by the migration API.
-|||
-createMigrationTable : Connection -> IO (Either OracleError ())
-createMigrationTable conn = do
-  result <- execute_
-    conn
-    """
-    CREATE TABLE __idris_migrations (
-        version      NUMBER PRIMARY KEY,
-        name         VARCHAR2(255) NOT NULL,
-        applied_at   TIMESTAMP NOT NULL
-    )
-    """
-    []
   case result of
-    Right () =>
-      pure (Right ())
-    Left err =>
-      -- ORA-00955 means the object already exists. Since the migration table
-      -- is fixed and owned by this library, an existing table is acceptable.
-      case err.code == 955 of
-        True  =>
+    Left err   =>
+      pure (Left err)
+    Right rows =>
+      case rows of
+        [] =>
+          execute_
+            conn
+            """
+            CREATE TABLE idris_oracle_migrations (
+                version      NUMBER PRIMARY KEY,
+                description  VARCHAR2(4000) NOT NULL,
+                applied_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+            )
+            """
+            []
+        _  =>
           pure (Right ())
-        False =>
-          pure (Left err)
 
 ||| Retrieve all migrations that have already been applied.
 |||
@@ -46,21 +47,22 @@ createMigrationTable conn = do
 |||
 export covering
 listAppliedMigrations : Connection -> IO (Either OracleError (List MigrationInfo))
-listAppliedMigrations conn = do
-  result <- queryRaw
-    conn
-    """
-    SELECT
-        version,
-        name,
-        TO_CHAR(
-            applied_at,
-            'YYYY-MM-DD"T"HH24:MI:SS.FF9'
-        )
-    FROM __idris_migrations
-    ORDER BY version
-    """
-    []
+listAppliedMigrations conn =
+  ensureMigrationTable conn
+  >>== \_ => do
+  result <- queryRaw conn
+                     """
+                     SELECT
+                         version,
+                         description,
+                         TO_CHAR(
+                             applied_at,
+                             'YYYY-MM-DD"T"HH24:MI:SS.FF9'
+                         )
+                     FROM idris_oracle_migrations
+                     ORDER BY version
+                     """
+                     []
   case result of
     Left err   =>
       pure (Left err)
@@ -69,13 +71,13 @@ listAppliedMigrations conn = do
   where
     decodeRow : List OracleValue -> Either OracleError MigrationInfo
     decodeRow [ OracleNumber version
-              , OracleString name
+              , OracleString description
               , OracleString appliedAt
               ]   =
       Right $
         MkMigrationInfo
           (cast version)
-          name
+          description
           appliedAt
     decodeRow row =
       Left $
@@ -184,16 +186,16 @@ recordMigration conn migration =
   execute_
     conn
     """
-    INSERT INTO __idris_migrations
+    INSERT INTO idris_oracle_migrations
     (
         version,
-        name,
+        description,
         applied_at
     )
     VALUES
     (
         :version,
-        :name,
+        :description,
         CURRENT_TIMESTAMP
     )
     """
@@ -201,7 +203,7 @@ recordMigration conn migration =
         ":version"
         (OracleNumber (cast (migrationversion migration)))
     , MkBindParameter
-        ":name"
+        ":description"
         (OracleString (migrationname migration))
     ]
 
@@ -212,7 +214,7 @@ removeMigrationRecord conn migration =
   execute_
     conn
     """
-    DELETE FROM __idris_migrations
+    DELETE FROM idris_oracle_migrations
     WHERE version = :version
     """
     [ MkBindParameter
@@ -233,17 +235,12 @@ removeMigrationRecord conn migration =
 export covering
 runMigrations : Connection -> List Migration -> IO (Either OracleError ())
 runMigrations conn migrations = do
-  tableresult <- createMigrationTable conn
-  case tableresult of
-    Left err =>
+  pendingresult <- pendingMigrations conn migrations
+  case pendingresult of
+    Left err      =>
       pure (Left err)
-    Right () => do
-      pendingresult <- pendingMigrations conn migrations
-      case pendingresult of
-        Left err      =>
-          pure (Left err)
-        Right pending =>
-          runPending conn pending
+    Right pending =>
+      runPending conn pending
   where
     runPending : Connection -> List Migration -> IO (Either OracleError ())
     runPending _    []                        =
@@ -279,47 +276,42 @@ runMigrations conn migrations = do
 export covering
 rollbackMigration : Connection -> List Migration -> IO (Either OracleError ())
 rollbackMigration conn migrations = do
-  tableresult <- createMigrationTable conn
-  case tableresult of
+  appliedresult <- listAppliedMigrations conn
+  case appliedresult of
     Left err =>
       pure (Left err)
-    Right () => do
-      appliedresult <- listAppliedMigrations conn
-      case appliedresult of
-        Left err =>
-          pure (Left err)
-        Right [] =>
+    Right [] =>
+      pure $
+        Left $
+          MkOracleError
+            (-1)
+            "No migrations have been applied"
+            "Oracle.Migration.Runner.rollbackMigration"
+            False
+    Right applied =>
+      case latestMigration applied of
+        Nothing =>
           pure $
             Left $
               MkOracleError
                 (-1)
-                "No migrations have been applied"
+                "Unable to determine latest migration"
                 "Oracle.Migration.Runner.rollbackMigration"
                 False
-        Right applied =>
-          case latestMigration applied of
+        Just latest        =>
+          case findMigration latest migrations of
             Nothing =>
               pure $
                 Left $
                   MkOracleError
                     (-1)
-                    "Unable to determine latest migration"
+                    ( "Migration definition not found for applied version "
+                      ++ show (migrationinfoversion latest)
+                    )
                     "Oracle.Migration.Runner.rollbackMigration"
                     False
-            Just latest        =>
-              case findMigration latest migrations of
-                Nothing =>
-                  pure $
-                    Left $
-                      MkOracleError
-                        (-1)
-                        ( "Migration definition not found for applied version "
-                          ++ show (migrationinfoversion latest)
-                        )
-                        "Oracle.Migration.Runner.rollbackMigration"
-                        False
-                Just migration =>
-                  rollback conn migration
+            Just migration =>
+              rollback conn migration
   where
     latestMigration : List MigrationInfo -> Maybe MigrationInfo
     latestMigration []              =

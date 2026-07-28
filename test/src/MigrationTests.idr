@@ -8,18 +8,18 @@ import Utils
 
 ||| First test migration.
 |||
-||| Creates the PEOPLE table.
+||| Creates the MIGRATION_PEOPLE table.
 |||
 migration001 : Connection -> Migration
 migration001 conn =
   MkMigration
     1
-    "Create people table"
+    "Create migration_people table"
     ( \conn =>
        execute_
          conn
          """
-         CREATE TABLE people (
+         CREATE TABLE migration_people (
          id   NUMBER PRIMARY KEY,
          name VARCHAR2(100) NOT NULL
          )
@@ -29,24 +29,24 @@ migration001 conn =
     (\conn =>
       execute_
         conn
-        "DROP TABLE people CASCADE CONSTRAINTS"
+        "DROP TABLE migration_people CASCADE CONSTRAINTS"
         []
     )
 
 ||| Second test migration.
 |||
-||| Adds an EMAIL column to the PEOPLE table.
+||| Adds an EMAIL column to the MIGRATION_PEOPLE table.
 |||
 migration002 : Connection -> Migration
 migration002 conn =
   MkMigration
     2
-    "Add email to people"
+    "Add email to migration_people"
     (\conn =>
       execute_
         conn
         """
-        ALTER TABLE people
+        ALTER TABLE migration_people
         ADD email VARCHAR2(255)
         """
         []
@@ -55,7 +55,7 @@ migration002 conn =
       execute_
         conn
         """
-        ALTER TABLE people
+        ALTER TABLE migration_people
         DROP COLUMN email
         """
         []
@@ -192,7 +192,7 @@ test_MigrationSchema conn = do
                      SELECT
                      column_name
                      FROM user_tab_columns
-                     WHERE table_name = 'PEOPLE'
+                     WHERE table_name = 'MIGRATION_PEOPLE'
                      ORDER BY column_id
                      """
                      []
@@ -211,7 +211,7 @@ test_MigrationSchema conn = do
             Left $
               MkOracleError
                 (-1)
-                ("Unexpected PEOPLE schema: " ++ show rows)
+                ("Unexpected MIGRATION_PEOPLE schema: " ++ show rows)
                 "MigrationTests.test_MigrationSchema"
                 False
 
@@ -260,7 +260,7 @@ test_SchemaAfterRollback conn = do
                      SELECT
                      column_name
                      FROM user_tab_columns
-                     WHERE table_name = 'PEOPLE'
+                     WHERE table_name = 'MIGRATION_PEOPLE'
                      ORDER BY column_id
                      """
                      []
@@ -278,7 +278,7 @@ test_SchemaAfterRollback conn = do
             Left $
               MkOracleError
                 (-1)
-                ("Unexpected PEOPLE schema after rollback: " ++ show rows)
+                ("Unexpected MIGRATION_PEOPLE schema after rollback: " ++ show rows)
                 "MigrationTests.test_SchemaAfterRollback"
                 False
 
