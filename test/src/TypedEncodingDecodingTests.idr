@@ -3,7 +3,7 @@ module TypedEncodingDecodingTests
 import Data.ByteString
 import Oracle
 import Oracle.Types.DateTime
-import PersonRow
+import PersonAndBlob
 import Utils
 
 export covering

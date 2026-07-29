@@ -1,7 +1,7 @@
 module QueryTests
 
 import Oracle
-import PersonRow
+import PersonAndBlob
 import Utils
 
 %default total
