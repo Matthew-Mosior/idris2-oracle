@@ -1,4 +1,4 @@
-module PersonRow
+module PersonAndBlob
 
 import Data.ByteString
 import Derive.Prelude
