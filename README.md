@@ -67,6 +67,7 @@ Running `make install` installs the library.
   - Typed queries returning Idris records
   - Single-row queries
   - Exactly-one-row queries
+- **Migration support**
 - **Comprehensive test suite**
   - Connection tests
   - Statement tests
@@ -74,6 +75,7 @@ Running `make install` installs the library.
   - Query tests
   - Typed decoding tests
   - Transaction tests
+  - Migration tests
 
 ## Why use this library?
 
@@ -1976,6 +1978,7 @@ Current coverage includes:
 - Transactions
 - LOB handling
 - Oracle error handling
+- Migrations
 
 ### Test database
 
