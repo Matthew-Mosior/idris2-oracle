@@ -395,7 +395,7 @@ int32_t oracle_bind_blob(oracle_stmt *stmt, const char *name, const char *value)
         &data);
 }
 
-int32_t oracle_bind_date(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t fsecond)
+int32_t oracle_bind_date(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second)
 {
     dpiData data;
 
@@ -409,7 +409,7 @@ int32_t oracle_bind_date(oracle_stmt *stmt, const char *name, int16_t year, uint
         hour,
         minute,
         second,
-        fsecond,
+        0,
         0,
         0);
 

@@ -34,6 +34,11 @@ prim__bindClob : AnyPtr -> String -> String -> PrimIO Int32
 export %foreign "C:oracle_bind_blob,oracle-idris"
 prim__bindBlob : AnyPtr -> String -> String -> PrimIO Int32
 
+||| Bind an Oracle DATE value to a named statement parameter.
+|||
+export %foreign "C:oracle_bind_date,oracle-idris"
+prim__bindDate : AnyPtr -> String -> Int16 -> Int8 -> Int8 -> Int8 -> Int8 -> Int8 -> PrimIO Int32
+
 ||| Bind an Oracle TIMESTAMP value to a named statement parameter.
 |||
 export %foreign "C:oracle_bind_timestamp,oracle-idris"
