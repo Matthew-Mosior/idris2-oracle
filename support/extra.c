@@ -395,6 +395,31 @@ int32_t oracle_bind_blob(oracle_stmt *stmt, const char *name, const char *value)
         &data);
 }
 
+int32_t oracle_bind_date(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t fsecond)
+{
+    dpiData data;
+
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setTimestamp(
+        &data,
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+        fsecond,
+        0,
+        0);
+
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_TIMESTAMP,
+        &data);
+}
+
 int32_t oracle_bind_timestamp(oracle_stmt *stmt, const char *name, int16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint32_t fsecond)
 {
     dpiData data;

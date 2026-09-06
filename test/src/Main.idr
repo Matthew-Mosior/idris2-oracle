@@ -40,6 +40,7 @@ main = do
       test_BindBoolFalse conn >>== \_ =>
       test_BindClob conn >>== \_ =>
       test_BindBlob conn >>== \_ =>
+      test_BindDate conn >>== \_ =>
       test_BindTimestamp conn >>== \_ =>
       test_BindTimestampTZ conn >>== \_ =>
       test_BindIntervalYM conn >>== \_ =>

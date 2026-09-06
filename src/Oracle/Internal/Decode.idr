@@ -78,6 +78,18 @@ decodeColumn stmt column = do
                 OracleTypeRaw         =>
                   Right . OracleBlob . fromString <$>
                     primIO (prim__dataString dataptr)
+                OracleTypeDate => do
+                  dt <- primIO (prim__dataTimestamp dataptr)
+                  pure $
+                    Right $
+                      OracleDate $
+                        MkOracleDate
+                          !(primIO (prim__timestampYear dt))
+                          !(primIO (prim__timestampMonth dt))
+                          !(primIO (prim__timestampDay dt))
+                          !(primIO (prim__timestampHour dt))
+                          !(primIO (prim__timestampMinute dt))
+                          !(primIO (prim__timestampSecond dt))
                 OracleTypeTimestamp   => do
                   ts <- primIO (prim__dataTimestamp dataptr)
                   pure $
