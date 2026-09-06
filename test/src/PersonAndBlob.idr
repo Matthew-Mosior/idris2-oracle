@@ -53,6 +53,17 @@ implementation FromOracle Bool where
         False
 
 public export
+implementation FromOracle OracleDate where
+  fromOracle(OracleDate d) = Right d
+  fromOracle value =
+    Left $
+      MkOracleError
+        (-1)
+        ("Expected DATE but got " ++ show value)
+        "FromOracle OracleDate"
+        False
+
+public export
 implementation FromOracle OracleTimestamp where
   fromOracle (OracleTimestamp ts) = Right ts
   fromOracle value =
@@ -104,6 +115,7 @@ record PersonRow where
   salary          : Double
   active          : Bool
   notes           : String
+  legacydate      : OracleDate
   hiretimestamp   : OracleTimestamp
   meetingtimetz   : OracleTimestampTZ
   vacationlength  : OracleIntervalYM
@@ -119,6 +131,7 @@ implementation FromRow PersonRow where
     , salary
     , active
     , notes
+    , date
     , hire
     , meeting
     , vacation
@@ -129,6 +142,7 @@ implementation FromRow PersonRow where
       salary'   <- fromOracle salary
       active'   <- fromOracle active
       notes'    <- fromOracle notes
+      date'     <- fromOracle date
       hire'     <- fromOracle hire
       meeting'  <- fromOracle meeting
       vacation' <- fromOracle vacation
@@ -140,6 +154,7 @@ implementation FromRow PersonRow where
           salary'
           active'
           notes'
+          date'
           hire'
           meeting'
           vacation'
@@ -170,6 +185,9 @@ implementation ToRow PersonRow where
     , MkBindParameter
         ":notes"
         (OracleClob person.notes)
+    , MkBindParameter
+        ":legacy_date"
+        (OracleDate person.legacydate)
     , MkBindParameter
         ":hire_timestamp"
         (OracleTimestamp person.hiretimestamp)

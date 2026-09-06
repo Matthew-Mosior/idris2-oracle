@@ -21,6 +21,7 @@ test_QueryTypedPeople conn = do
             salary,
             active,
             notes,
+            legacy_date,
             hire_timestamp,
             meeting_time_tz,
             vacation_length,
@@ -44,6 +45,7 @@ test_QueryTypedPeople conn = do
                       90000
                       True
                       "Alice Notes"
+                      (MkOracleDate 2020 6 15 14 30 45)
                       (MkOracleTimestamp 2022 5 10 9 15 30 123457000)
                       (MkOracleTimestampTZ 2025 7 1 10 45 30 987654000 (-5) 0)
                       (MkOracleIntervalYM 2 6)
@@ -53,6 +55,7 @@ test_QueryTypedPeople conn = do
                       120000
                       False
                       "Bob Notes"
+                      (MkOracleDate 2019 5 14 13 29 44)
                       (MkOracleTimestamp 2015 1 8 16 45 1 0)
                       (MkOracleTimestampTZ 2025 1 1 0 0 0 0 (-5) 0)
                       (MkOracleIntervalYM 15 3)
@@ -82,6 +85,7 @@ test_QueryOneTyped conn = do
             salary,
             active,
             notes,
+            legacy_date,
             hire_timestamp,
             meeting_time_tz,
             vacation_length,
@@ -98,7 +102,7 @@ test_QueryOneTyped conn = do
                         (show err)
                         "TypedEncodingDecodingTests.test_QueryOneTyped"
                         False
-    Right (Just (MkPersonRow "Bob" 42 _ _ _ _ _ _ _)) =>
+    Right (Just (MkPersonRow "Bob" 42 _ _ _ _ _ _ _ _)) =>
       pure (Right ())
     Right value                                       =>
       pure $
@@ -123,6 +127,7 @@ test_QueryOneMissing conn = do
             salary,
             active,
             notes,
+            legacy_date,
             hire_timestamp,
             meeting_time_tz,
             vacation_length,
@@ -164,6 +169,7 @@ test_QueryExactlyOneTyped conn = do
             salary,
             active,
             notes,
+            legacy_date,
             hire_timestamp,
             meeting_time_tz,
             vacation_length,
@@ -173,7 +179,7 @@ test_QueryExactlyOneTyped conn = do
         """
         [MkBindParameter ":name" (OracleString "Alice")]
   case result of
-    Right (MkPersonRow "Alice" 30 _ _ _ _ _ _ _) =>
+    Right (MkPersonRow "Alice" 30 _ _ _ _ _ _ _ _) =>
       pure (Right ())
     Right row                                    =>
       pure $
@@ -205,6 +211,7 @@ test_QueryExactlyOneMissing conn = do
             salary,
             active,
             notes,
+            legacy_date,
             hire_timestamp,
             meeting_time_tz,
             vacation_length,
@@ -239,6 +246,7 @@ test_QueryExactlyOneMultiple conn = do
             salary,
             active,
             notes,
+            legacy_date,
             hire_timestamp,
             meeting_time_tz,
             vacation_length,

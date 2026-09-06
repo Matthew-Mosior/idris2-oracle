@@ -23,7 +23,7 @@ test_BindNull conn = do
       INSERT INTO people
       (
           id,name,age,salary,active,
-          created_at,notes,
+          created_at,notes,legacy_date,
           hire_timestamp,meeting_time_tz,
           vacation_length,uptime
       )
@@ -32,7 +32,7 @@ test_BindNull conn = do
           people_seq.NEXTVAL,
           'Null',
           NULL,NULL,NULL,
-          NULL,NULL,
+          NULL,NULL,NULL,
           NULL,NULL,
           NULL,NULL
       )
@@ -234,6 +234,34 @@ test_BindBlob conn = do
           MkOracleError (-1)
                         (show err)
                         "BindTests.test_BindBlob"
+                        False
+    Right () =>
+      pure (Right ())
+
+||| Verify DATE binding.
+|||
+export
+test_BindDate : Connection -> IO (Either OracleError ())
+test_BindDate conn = do
+  result <-
+    runBind conn
+      """
+      INSERT INTO people(id,name,legacy_date)
+      VALUES(people_seq.NEXTVAL,'DATE',:d)
+      """
+      [ MkBindParameter
+          ":d"
+          (OracleDate $
+            MkOracleDate
+              2021 8 16 15 30 45)
+      ]
+  case result of
+    Left err =>
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindDate"
                         False
     Right () =>
       pure (Right ())

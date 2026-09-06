@@ -56,6 +56,7 @@ installSchema conn =
     active              BOOLEAN,
     created_at          TIMESTAMP,
     notes               CLOB,
+    legacy_date         DATE,
     hire_timestamp      TIMESTAMP,
     meeting_time_tz     TIMESTAMP WITH TIME ZONE,
     vacation_length     INTERVAL YEAR(4) TO MONTH,
@@ -157,6 +158,7 @@ seedPeople conn =
         active,
         created_at,
         notes,
+        legacy_date,
         hire_timestamp,
         meeting_time_tz,
         vacation_length,
@@ -172,6 +174,7 @@ seedPeople conn =
         :active,
         CURRENT_TIMESTAMP,
         :notes,
+        :legacy_date,
         :hire_timestamp,
         :meeting_time_tz,
         :vacation_length,
@@ -184,6 +187,11 @@ seedPeople conn =
     , MkBindParameter ":salary" (OracleNumber 90000)
     , MkBindParameter ":active" (OracleBool True)
     , MkBindParameter ":notes"  (OracleClob "Alice Notes")
+    , MkBindParameter ":legacy_date" ( OracleDate $
+                                         MkOracleDate
+                                           2020 6 15
+                                           14 30 45
+                                     )
     , MkBindParameter ":hire_timestamp" ( OracleTimestamp $
                                             MkOracleTimestamp
                                               2022 5 10
@@ -227,6 +235,7 @@ seedPeople conn =
         active,
         created_at,
         notes,
+        legacy_date,
         hire_timestamp,
         meeting_time_tz,
         vacation_length,
@@ -242,6 +251,7 @@ seedPeople conn =
         :active,
         CURRENT_TIMESTAMP,
         :notes,
+        :legacy_date,
         :hire_timestamp,
         :meeting_time_tz,
         :vacation_length,
@@ -254,6 +264,11 @@ seedPeople conn =
     , MkBindParameter ":salary" (OracleNumber 120000)
     , MkBindParameter ":active" (OracleBool False)
     , MkBindParameter ":notes"  (OracleClob "Bob Notes")
+    , MkBindParameter ":legacy_date" ( OracleDate $
+                                         MkOracleDate
+                                           2019 5 14
+                                           13 29 44
+                                     )
     , MkBindParameter ":hire_timestamp" ( OracleTimestamp $
                                             MkOracleTimestamp
                                               2015 1 8

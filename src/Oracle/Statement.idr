@@ -161,6 +161,17 @@ bindOne stmt param =
     OracleBlob b          =>
       primIO (prim__bindBlob stmt.ptr param.name (toString b))
         >>= finish
+    OracleDate ts         =>
+      primIO ( prim__bindDate stmt.ptr
+                              param.name
+                              (cast ts.year)
+                              (cast ts.month)
+                              (cast ts.day)
+                              (cast ts.hour)
+                              (cast ts.minute)
+                              (cast ts.second)
+             )
+        >>= finish
     OracleTimestamp ts    =>
       primIO ( prim__bindTimestamp stmt.ptr
                                    param.name
