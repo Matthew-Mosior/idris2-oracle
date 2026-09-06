@@ -33,6 +33,7 @@ Running `make install` installs the library.
   - `BOOLEAN`
   - `CLOB`
   - `BLOB`
+  - `DATE`
   - `TIMESTAMP`
   - `TIMESTAMP WITH TIME ZONE`
   - `INTERVAL YEAR TO MONTH`
@@ -433,6 +434,7 @@ The library currently supports binding:
 - `OracleBool`
 - `OracleClob`
 - `OracleBlob`
+- `OracleDate`
 - `OracleTimestamp`
 - `OracleTimestampTZ`
 - `OracleIntervalYM`
@@ -585,7 +587,8 @@ The library currently supports:
 
 | Oracle datatype            |  Idris representation |
 | -------------------------- | --------------------- |
-| `TIMESTAMP`                |  `OracleTimestamp`    |
+| `DATE`                     | `OracleDate`          |
+| `TIMESTAMP`                | `OracleTimestamp`     |
 | `TIMESTAMP WITH TIME ZONE` | `OracleTimestampTZ`   |
 | `INTERVAL YEAR TO MONTH`   | `OracleIntervalYM`    |
 | `INTERVAL DAY TO SECOND`   | `OracleIntervalDS`    |
@@ -1989,6 +1992,7 @@ During testing the suite creates a small schema containing representative Oracle
 - numeric values
 - strings
 - booleans
+- dates
 - timestamps
 - intervals
 - CLOBs
