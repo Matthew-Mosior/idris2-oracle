@@ -72,6 +72,15 @@ decodeColumn stmt column = do
                 OracleTypeVarchar     =>
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
+                OracleTypeChar        =>
+                  Right . OracleString <$>
+                    primIO (prim__dataString dataptr)
+                OracleTypeNVarchar    =>
+                  Right . OracleString <$>
+                    primIO (prim__dataString dataptr)
+                OracleTypeNChar       =>
+                  Right . OracleString <$>
+                    primIO (prim__dataString dataptr)
                 OracleTypeNumber      =>
                   Right . OracleNumber <$>
                     primIO (prim__dataDouble dataptr)

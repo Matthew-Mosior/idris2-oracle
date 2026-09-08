@@ -33,6 +33,7 @@ main = do
       test_ConcurrentStatements conn >>== \_ =>
       test_BindNull conn >>== \_ =>
       test_BindString conn >>== \_ =>
+      test_BindCharTypes conn >>== \_ =>
       test_BindEmptyString conn >>== \_ =>
       test_BindInt conn >>== \_ =>
       test_BindDouble conn >>== \_ =>
@@ -54,6 +55,7 @@ main = do
       test_QueryWithWhereClause conn >>== \_ =>
       test_QueryAs conn >>== \_ =>
       test_QueryOneAs conn >>== \_ =>
+      test_QueryCharacterTypes conn >>== \_ =>
       test_QueryTypedPeople conn >>== \_ =>
       test_QueryOneTyped conn >>== \_ =>
       test_QueryOneMissing conn >>== \_ =>
