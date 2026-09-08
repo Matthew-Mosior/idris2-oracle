@@ -34,6 +34,7 @@ Running `make install` installs the library.
   - `NCHAR`
   - `NUMBER`
   - `BOOLEAN`
+  - `RAW`
   - `CLOB`
   - `BLOB`
   - `DATE`
@@ -435,6 +436,7 @@ The library currently supports binding:
 - `OracleString`
 - `OracleNumber`
 - `OracleBool`
+- `OracleRaw`
 - `OracleClob`
 - `OracleBlob`
 - `OracleDate`
@@ -1998,6 +2000,7 @@ During testing the suite creates a small schema containing representative Oracle
 - dates
 - timestamps
 - intervals
+- raw bytes
 - CLOBs
 - BLOBs
 - JSON

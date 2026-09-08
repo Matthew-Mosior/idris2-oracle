@@ -359,6 +359,24 @@ int32_t oracle_bind_double(oracle_stmt *stmt, const char *name, double value)
         &data);
 }
 
+int32_t oracle_bind_raw(oracle_stmt *stmt, const char *name, const char *value)
+{
+    dpiData data;
+
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setBytes(
+        &data,
+        (char *) value,
+        (uint32_t) strlen(value));
+
+    return oracle_bind_native(
+        stmt,
+        name,
+        DPI_NATIVE_TYPE_BYTES,
+        &data);
+}
+
 int32_t oracle_bind_clob(oracle_stmt *stmt, const char *name, const char *value)
 {
     dpiData data;
@@ -639,6 +657,42 @@ dpiData *oracle_column_value(oracle_stmt *stmt, int32_t column)
     }
 
     return data;
+}
+
+char *oracle_data_bytes_hex(dpiData *data)
+{
+    dpiBytes *bytes;
+    char *hex;
+
+    static const char digits[] = "0123456789ABCDEF";
+
+    if (!data)
+        return NULL;
+
+    bytes = dpiData_getBytes(data);
+
+    if (!bytes)
+        return NULL;
+
+    hex = malloc((size_t) bytes->length * 2 + 1);
+
+    if (!hex)
+        return NULL;
+
+    for (uint32_t i = 0; i < bytes->length; i++) {
+        unsigned char byte =
+            (unsigned char) bytes->ptr[i];
+
+        hex[i * 2] =
+            digits[(byte >> 4) & 0x0F];
+
+        hex[i * 2 + 1] =
+            digits[byte & 0x0F];
+    }
+
+    hex[(size_t) bytes->length * 2] = '\0';
+
+    return hex;
 }
 
 dpiLob *oracle_data_lob(dpiData *data)

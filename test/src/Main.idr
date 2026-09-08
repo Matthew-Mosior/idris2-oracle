@@ -39,6 +39,7 @@ main = do
       test_BindDouble conn >>== \_ =>
       test_BindBoolTrue conn >>== \_ =>
       test_BindBoolFalse conn >>== \_ =>
+      test_BindRaw conn >>== \_ =>
       test_BindClob conn >>== \_ =>
       test_BindBlob conn >>== \_ =>
       test_BindDate conn >>== \_ =>
@@ -56,6 +57,7 @@ main = do
       test_QueryAs conn >>== \_ =>
       test_QueryOneAs conn >>== \_ =>
       test_QueryCharacterTypes conn >>== \_ =>
+      test_QueryRawType conn >>== \_ =>
       test_QueryTypedPeople conn >>== \_ =>
       test_QueryOneTyped conn >>== \_ =>
       test_QueryOneMissing conn >>== \_ =>

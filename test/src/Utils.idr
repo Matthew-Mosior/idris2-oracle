@@ -43,6 +43,9 @@ installSchema conn =
     (execute_ conn "DROP TABLE character_types CASCADE CONSTRAINTS" [])
   >>== \_ =>
   ignoreMissingObject
+    (execute_ conn "DROP TABLE raw_types CASCADE CONSTRAINTS" [])
+  >>== \_ =>
+  ignoreMissingObject
     (execute_ conn "DROP SEQUENCE blobs_seq" [])
   >>== \_ =>
   ignoreMissingObject
@@ -50,6 +53,9 @@ installSchema conn =
   >>== \_ =>
   ignoreMissingObject
     (execute_ conn "DROP SEQUENCE character_types_seq" [])
+  >>== \_ =>
+  ignoreMissingObject
+    (execute_ conn "DROP SEQUENCE raw_types_seq" [])
   >>== \_ =>
   execute_
     conn
@@ -132,6 +138,26 @@ installSchema conn =
         NOCACHE
     """
     []
+  >>== \_ =>
+  execute_
+    conn
+    """
+    CREATE TABLE raw_types (
+        id          NUMBER PRIMARY KEY,
+        raw_value   RAW(16)
+    )
+    """
+    []
+  >>== \_ =>
+  execute_
+    conn
+    """
+    CREATE SEQUENCE raw_types_seq
+        START WITH 1
+        INCREMENT BY 1
+        NOCACHE
+    """
+    []
 
 ||| Remove all rows from every integration test table.
 |||
@@ -143,6 +169,8 @@ clearTables conn =
   execute_ conn "TRUNCATE TABLE people" []
     >>== \_ =>
   execute_ conn "TRUNCATE TABLE character_types" []
+    >>== \_ =>
+  execute_ conn "TRUNCATE TABLE raw_types" []
 
 ||| Remove all migration history for the integration test suite.
 |||
@@ -413,6 +441,30 @@ seedCharacterTypes conn =
         (OracleString "世界")
     ]
 
+||| Populate the RAW_TYPES table with the standard integration test fixture.
+|||
+export
+seedRawTypes : Connection -> IO (Either OracleError ())
+seedRawTypes conn =
+  execute_
+    conn
+    """
+    INSERT INTO raw_types
+    (
+        id,
+        raw_value
+    )
+    VALUES
+    (
+        raw_types_seq.NEXTVAL,
+        :raw_value
+    )
+    """
+    [ MkBindParameter
+        ":raw_value"
+        (OracleRaw (pack [0x00, 0xFF, 0x01, 0x80, 0x41, 0x42]))
+    ]
+
 ||| Restore the integration database to its standard fixture.
 |||
 export
@@ -425,5 +477,7 @@ resetDatabase conn =
   seedBlobs conn
   >>== \_ =>
   seedCharacterTypes conn
+  >>== \_ =>
+  seedRawTypes conn
   >>== \_ =>
   commit conn

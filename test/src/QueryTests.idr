@@ -1,5 +1,6 @@
 module QueryTests
 
+import Data.ByteString
 import Oracle
 import PersonAndBlob
 import Utils
@@ -316,3 +317,55 @@ test_QueryCharacterTypes conn = do
                             ("Unexpected character type rows: " ++ show rows)
                             "QueryTests.test_QueryCharacterTypes"
                             False
+
+||| Verify that RAW values are decoded as OracleRaw.
+|||
+export covering
+test_QueryRawType : Connection -> IO (Either OracleError ())
+test_QueryRawType conn = do
+  result <-
+    resetDatabase conn >>==
+    \_ =>
+      query conn
+        """
+        SELECT raw_value
+        FROM raw_types
+        """
+        []
+  case result of
+    Left err   =>
+      pure $
+        Left $
+          MkOracleError
+            (-1)
+            (show err)
+            "QueryTests.test_QueryRawType"
+            False
+    Right rows =>
+      case rows of
+        [[OracleRaw bytes]] =>
+          case bytes == expectedrawbytes of
+            True =>
+              pure (Right ())
+            False =>
+              pure $
+                Left $
+                  MkOracleError
+                    (-1)
+                    ("Unexpected RAW value: " ++ show bytes)
+                    "QueryTests.test_QueryRawType"
+                    False
+        _                   =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                ("Unexpected RAW rows: " ++ show rows)
+                "QueryTests.test_QueryRawType"
+                False
+  where
+    ||| Expected binary value stored in RAW_TYPES.RAW_VALUE.
+    |||
+    expectedrawbytes : ByteString
+    expectedrawbytes =
+      pack [0x00, 0xFF, 0x01, 0x80, 0x41, 0x42]

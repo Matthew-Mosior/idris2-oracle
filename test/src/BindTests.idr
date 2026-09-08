@@ -216,6 +216,32 @@ test_BindBoolFalse conn = do
     Right () =>
       pure (Right ())
 
+||| Verify RAW binding.
+|||
+export
+test_BindRaw : Connection -> IO (Either OracleError ())
+test_BindRaw conn = do
+  result <-
+    runBind conn
+      """
+      INSERT INTO raw_types(id,raw_value)
+      VALUES(raw_types_seq.NEXTVAL,:raw_value)
+      """
+      [ MkBindParameter
+          ":raw_value"
+          (OracleRaw (pack [0x00, 0xFF, 0x01, 0x80, 0x41, 0x42]))
+      ]
+  case result of
+    Left err =>
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindRaw"
+                        False
+    Right () =>
+      pure (Right ())
+
 ||| Verify CLOB binding.
 |||
 export
