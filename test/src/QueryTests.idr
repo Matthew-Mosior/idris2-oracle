@@ -277,3 +277,42 @@ test_QueryOneAs conn = do
               "Expected PersonRow for Alice"
               "QueryTests.test_QueryOneAs"
               False
+
+||| Verify that CHAR, NCHAR, and NVARCHAR2 values are decoded as OracleString.
+|||
+export covering
+test_QueryCharacterTypes : Connection -> IO (Either OracleError ())
+test_QueryCharacterTypes conn = do
+  result <-
+    resetDatabase conn >>==
+    \_ =>
+      query conn
+        """
+        SELECT varchar_value,char_value,nvarchar_value,nchar_value
+        FROM character_types
+        """
+        []
+  case result of
+    Left err   =>
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "QueryTests.test_QueryCharacterTypes"
+                        False
+    Right rows =>
+      case rows of
+        [ [ OracleString "hello"
+          , OracleString "hello     "
+          , OracleString "こんにちは"
+          , OracleString "世界"
+          ]
+        ] =>
+          pure (Right ())
+        _ =>
+          pure $
+            Left $
+              MkOracleError (-1)
+                            ("Unexpected character type rows: " ++ show rows)
+                            "QueryTests.test_QueryCharacterTypes"
+                            False

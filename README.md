@@ -29,6 +29,9 @@ Running `make install` installs the library.
   - Statement reuse
 - **Rich type support**
   - `VARCHAR2`
+  - `CHAR`
+  - `NVARCHAR2`
+  - `NCHAR`
   - `NUMBER`
   - `BOOLEAN`
   - `CLOB`

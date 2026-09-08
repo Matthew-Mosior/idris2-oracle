@@ -40,10 +40,16 @@ installSchema conn =
     (execute_ conn "DROP TABLE people CASCADE CONSTRAINTS" [])
   >>== \_ =>
   ignoreMissingObject
+    (execute_ conn "DROP TABLE character_types CASCADE CONSTRAINTS" [])
+  >>== \_ =>
+  ignoreMissingObject
     (execute_ conn "DROP SEQUENCE blobs_seq" [])
   >>== \_ =>
   ignoreMissingObject
     (execute_ conn "DROP SEQUENCE people_seq" [])
+  >>== \_ =>
+  ignoreMissingObject
+    (execute_ conn "DROP SEQUENCE character_types_seq" [])
   >>== \_ =>
   execute_
     conn
@@ -103,6 +109,29 @@ installSchema conn =
         NOCACHE
     """
     []
+  >>== \_ =>
+  execute_
+    conn
+    """
+    CREATE TABLE character_types (
+        id              NUMBER PRIMARY KEY,
+        varchar_value   VARCHAR2(100),
+        char_value      CHAR(10),
+        nvarchar_value  NVARCHAR2(100),
+        nchar_value     NCHAR(2)
+    )
+    """
+    []
+  >>== \_ =>
+  execute_
+    conn
+    """
+    CREATE SEQUENCE character_types_seq
+        START WITH 1
+        INCREMENT BY 1
+        NOCACHE
+    """
+    []
 
 ||| Remove all rows from every integration test table.
 |||
@@ -112,6 +141,8 @@ clearTables conn =
   execute_ conn "TRUNCATE TABLE blobs" []
     >>== \_ =>
   execute_ conn "TRUNCATE TABLE people" []
+    >>== \_ =>
+  execute_ conn "TRUNCATE TABLE character_types" []
 
 ||| Remove all migration history for the integration test suite.
 |||
@@ -343,6 +374,45 @@ seedBlobs conn =
         (OracleBlob (fromString "FF"))
     ]
 
+||| Populate the CHARACTER_TYPES table with the standard integration test fixture.
+|||
+export
+seedCharacterTypes : Connection -> IO (Either OracleError ())
+seedCharacterTypes conn =
+  execute_
+    conn
+    """
+    INSERT INTO character_types
+    (
+        id,
+        varchar_value,
+        char_value,
+        nvarchar_value,
+        nchar_value
+    )
+    VALUES
+    (
+        character_types_seq.NEXTVAL,
+        :varchar_value,
+        :char_value,
+        :nvarchar_value,
+        :nchar_value
+    )
+    """
+    [ MkBindParameter
+        ":varchar_value"
+        (OracleString "hello")
+    , MkBindParameter
+        ":char_value"
+        (OracleString "hello")
+    , MkBindParameter
+        ":nvarchar_value"
+        (OracleString "こんにちは")
+    , MkBindParameter
+        ":nchar_value"
+        (OracleString "世界")
+    ]
+
 ||| Restore the integration database to its standard fixture.
 |||
 export
@@ -353,5 +423,7 @@ resetDatabase conn =
   seedPeople conn
   >>== \_ =>
   seedBlobs conn
+  >>== \_ =>
+  seedCharacterTypes conn
   >>== \_ =>
   commit conn

@@ -72,6 +72,33 @@ test_BindString conn = do
     Right () =>
       pure (Right ())
 
+||| Verify CHAR, NVARCHAR2, NCHAR bindings.
+|||
+export
+test_BindCharTypes : Connection -> IO (Either OracleError ())
+test_BindCharTypes conn = do
+  result <-
+    runBind conn
+      """
+      INSERT INTO character_types (id,varchar_value,char_value,nvarchar_value,nchar_value)
+      VALUES(character_types_seq.NEXTVAL,:varchar_value,:char_value,:nvarchar_value,:nchar_value)
+      """
+      [ MkBindParameter ":varchar_value"  (OracleString "foo")
+      , MkBindParameter ":char_value"     (OracleString "bar")
+      , MkBindParameter ":nvarchar_value" (OracleString "日本語")
+      , MkBindParameter ":nchar_value"    (OracleString "文字")
+      ]
+  case result of
+    Left err =>
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindCharTypes"
+                        False
+    Right () =>
+      pure (Right ())
+
 ||| Verify that Oracle treats an empty VARCHAR2 as NULL.
 |||
 ||| Since NAME is NOT NULL this should fail with ORA-01400.

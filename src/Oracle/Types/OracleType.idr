@@ -7,6 +7,9 @@ import Derive.Prelude
 public export
 data OracleType
   = OracleTypeVarchar
+  | OracleTypeChar
+  | OracleTypeNVarchar
+  | OracleTypeNChar
   | OracleTypeRaw
   | OracleTypeNumber
   | OracleTypeDate
@@ -26,6 +29,9 @@ data OracleType
 export
 fromOracleTypeNum : Int32 -> OracleType
 fromOracleTypeNum 2001 = OracleTypeVarchar
+fromOracleTypeNum 2003 = OracleTypeChar
+fromOracleTypeNum 2002 = OracleTypeNVarchar
+fromOracleTypeNum 2004 = OracleTypeNChar
 fromOracleTypeNum 2006 = OracleTypeRaw
 fromOracleTypeNum 2010 = OracleTypeNumber
 fromOracleTypeNum 2011 = OracleTypeDate
