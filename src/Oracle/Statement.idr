@@ -10,6 +10,7 @@ import Oracle.FFI.Bind
 import Oracle.FFI.DateTime
 import Oracle.FFI.Statement
 import Oracle.Internal.Decode
+import Oracle.Internal.Hex
 import Oracle.Internal.Pointer
 import Oracle.Types.BindParameter
 import Oracle.Types.DateTime
@@ -128,6 +129,7 @@ execute stmt = do
 ||| - OracleUInt
 ||| - OracleDouble
 ||| - OracleBool
+||| - OracleRaw
 ||| - OracleClob
 ||| - OracleBlob
 ||| - OracleDate
@@ -154,6 +156,9 @@ bindOne stmt param =
         >>= finish
     OracleBool b          =>
       primIO (prim__bindBool stmt.ptr param.name (if b then 1 else 0))
+        >>= finish
+    OracleRaw b           =>
+      primIO (prim__bindRaw stmt.ptr param.name (hexEncode $ unpack b))
         >>= finish
     OracleClob s          =>
       primIO (prim__bindClob stmt.ptr param.name s)

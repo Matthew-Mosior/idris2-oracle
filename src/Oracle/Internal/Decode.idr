@@ -9,7 +9,9 @@ import Oracle.FFI.Data
 import Oracle.FFI.DateTime
 import Oracle.FFI.Lob
 import Oracle.FFI.QueryInfo
+import Oracle.FFI.Raw
 import Oracle.FFI.Statement
+import Oracle.Internal.Hex
 import Oracle.Internal.QueryInfo
 import Oracle.Types.ColumnInfo
 import Oracle.Types.DateTime
@@ -84,9 +86,6 @@ decodeColumn stmt column = do
                 OracleTypeNumber      =>
                   Right . OracleNumber <$>
                     primIO (prim__dataDouble dataptr)
-                OracleTypeRaw         =>
-                  Right . OracleBlob . fromString <$>
-                    primIO (prim__dataString dataptr)
                 OracleTypeDate => do
                   dt <- primIO (prim__dataTimestamp dataptr)
                   pure $
@@ -146,6 +145,17 @@ decodeColumn stmt column = do
                           !(primIO (prim__intervalDSMinutes iv))
                           !(primIO (prim__intervalDSSeconds iv))
                           !(primIO (prim__intervalDSNanoseconds iv))
+                OracleTypeRaw         => do
+                  result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeRaw) 
+                  case result of
+                    Right value =>
+                      case value of
+                        Left err     =>
+                          pure (Left err)
+                        Right value' =>
+                          pure (Right value')
+                    Left err    =>
+                      assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
                 OracleTypeBlob        => do
                   result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeBlob) 
                   case result of
@@ -192,9 +202,13 @@ decodeColumn stmt column = do
                         "Oracle.Internal.Decode.decodeColumn"
                         False
   where
-    acquire : AnyPtr -> F1 World AnyPtr
-    acquire dataptr =
-      ioToF1 (primIO (prim__dataLob dataptr))
+    acquire : AnyPtr -> OracleType -> F1 World AnyPtr
+    acquire dataptr oracletype =
+      case oracletype of
+        OracleTypeRaw =>
+          ioToF1 (pure dataptr)
+        _             =>
+          ioToF1 (primIO (prim__dataLob dataptr))
     use : AnyPtr -> OracleType -> F1 World (Either OracleError OracleValue)
     use ptr oracletype =
       case oracletype of
@@ -222,6 +236,25 @@ decodeColumn stmt column = do
                           text <- primIO (prim__clobRead ptr)
                           pure (Right $ OracleClob text)
                  )
+        OracleTypeRaw =>
+          ioToF1 (do case prim__nullAnyPtr ptr == 1 of
+                       True  => do
+                         lasterr <- getLastError
+                         pure (Left lasterr)
+                       False => do
+                         hex <- primIO (prim__dataBytesHex ptr)
+                         case hexDecode hex of
+                           Nothing    =>
+                             pure $
+                               Left $
+                                 MkOracleError
+                                   (-1)
+                                   ("Invalid RAW hexadecimal value: " ++ hex)
+                                   "Oracle.Internal.Decode.decodeColumn.use"
+                                   False
+                           Just bytes =>
+                             pure (Right $ OracleRaw $ pack bytes)
+                 )
         ty             =>
           ioToF1 ( pure $
                      Left $
@@ -231,11 +264,15 @@ decodeColumn stmt column = do
                          "Oracle.Internal.Decode.decodeColumn.use"
                          False
                  )
-    release : AnyPtr -> F1' World
-    release ptr =
-      ioToF1 (primIO (prim__lobRelease ptr))
+    release : AnyPtr -> OracleType -> F1' World
+    release ptr oracletype =
+      case oracletype of
+        OracleTypeRaw =>
+          ioToF1 (pure ())
+        _             =>
+          ioToF1 (primIO (prim__lobRelease ptr))
     withDataPtrAndOracleType : AnyPtr -> OracleType -> Elin World [] (Either OracleError OracleValue)
     withDataPtrAndOracleType dataptr oracletype =
-      bracket (runIO (acquire dataptr))
+      bracket (runIO (acquire dataptr oracletype))
               (\ptr => runIO (use ptr oracletype))
-              (\ptr => runIO (release ptr))
+              (\ptr => runIO (release ptr oracletype))

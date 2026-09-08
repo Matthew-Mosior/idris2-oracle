@@ -24,6 +24,15 @@ prim__bindDouble : AnyPtr -> String -> Double -> PrimIO Int32
 export %foreign "C:oracle_bind_bool,oracle-idris"
 prim__bindBool : AnyPtr -> String -> Int32 -> PrimIO Int32
 
+||| Bind an Oracle RAW value.
+|||
+||| The String argument contains the hexadecimal representation of the raw
+||| bytes. The C layer decodes the hex string back into binary data before
+||| binding it as Oracle RAW.
+|||
+export %foreign "C:oracle_bind_raw,oracle-idris"
+prim__bindRaw : AnyPtr -> String -> String -> PrimIO Int32
+
 ||| Bind a CLOB value.
 |||
 export %foreign "C:oracle_bind_clob,oracle-idris"

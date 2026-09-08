@@ -16,6 +16,7 @@ data OracleValue
   | OracleString      String      -- VARCHAR2, CHAR, NVARCHAR2, etc.
   | OracleNumber      Double      -- NUMBER
   | OracleBool        Bool        -- BOOLEAN
+  | OracleRaw         ByteString  -- RAW
   | OracleClob        String      -- Character large object (CLOB)
   | OracleBlob        ByteString  -- Binary large object (BLOB)
   | OracleDate        OracleDate

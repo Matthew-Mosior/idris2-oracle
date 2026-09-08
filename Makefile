@@ -12,6 +12,7 @@ test: oracle-client-check
 	idris2 --build oracle.ipkg
 	idris2 --install oracle.ipkg
 	cd test && \
+		idris2 --clean test.ipkg && \
 		idris2 --build test.ipkg && \
 		./build/exec/oracle-test
 
