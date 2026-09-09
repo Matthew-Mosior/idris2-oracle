@@ -364,8 +364,58 @@ test_QueryRawType conn = do
                 "QueryTests.test_QueryRawType"
                 False
   where
-    ||| Expected binary value stored in RAW_TYPES.RAW_VALUE.
+    ||| Expected binary value stored in raw_types.raw_value.
     |||
     expectedrawbytes : ByteString
     expectedrawbytes =
       pack [0x00, 0xFF, 0x01, 0x80, 0x41, 0x42]
+
+||| Verify that BINARY_FLOAT and BINARY_DOUBLE values are decoded correctly.
+|||
+export covering
+test_QueryBinaryFloatingTypes : Connection -> IO (Either OracleError ())
+test_QueryBinaryFloatingTypes conn = do
+  result <-
+    resetDatabase conn >>==
+    \_ =>
+      query conn
+        """
+        SELECT binary_float_value,binary_double_value
+        FROM floating_types
+        """
+        []
+  case result of
+    Left err =>
+      pure $
+        Left $
+          MkOracleError
+            (-1)
+            (show err)
+            "QueryTests.test_QueryBinaryFloatingTypes"
+            False
+    Right rows =>
+      case rows of
+        [[OracleBinaryFloat 1.5, OracleBinaryDouble binarydouble]] =>
+          case binarydouble == expectedbinarydouble of
+            True  =>
+              pure (Right())
+            False =>
+              pure $
+                Left $
+                  MkOracleError
+                    (-1)
+                    ("Unexpected BINARY_DOUBLE value: " ++ show binarydouble)
+                    "QueryTests.test_QueryBinaryFloatingTypes"
+                    False
+        _ =>
+          pure $
+            Left $
+              MkOracleError
+                (-1)
+                ("Unexpected floating type rows: " ++ show rows)
+                "QueryTests.test_QueryBinaryFloatingTypes"
+                False
+  where
+    ||| Expected binary double value stored in floating_types.binary_double_value.
+    expectedbinarydouble : Double
+    expectedbinarydouble = -42.25

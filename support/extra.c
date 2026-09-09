@@ -245,6 +245,22 @@ double oracle_data_double(dpiData *data)
     return data->value.asDouble;
 }
 
+double oracle_data_binary_float(dpiData *data)
+{
+    if (!data)
+        return 0.0;
+
+    return (double) dpiData_getFloat(data);
+}
+
+double oracle_data_binary_double(dpiData *data)
+{
+    if (!data)
+        return 0.0;
+
+    return dpiData_getDouble(data);
+}
+
 char *oracle_data_string(dpiData *data)
 {
     dpiBytes *bytes;
@@ -288,6 +304,45 @@ static int32_t oracle_bind_native(oracle_stmt *stmt, const char *name, dpiNative
 
     if (rc < 0)
         oracle_capture_last_error();
+
+    return rc;
+}
+
+static int32_t oracle_bind_typed(oracle_stmt *stmt, const char *name, dpiOracleTypeNum oracleType, dpiNativeTypeNum nativeType, dpiData *data)
+{
+    dpiVar *var = NULL;
+    dpiData *varData = NULL;
+    int rc;
+
+    rc = dpiConn_newVar(
+        stmt->conn,
+        oracleType,
+        nativeType,
+        1,
+        0,
+        0,
+        0,
+        NULL,
+        &var,
+        &varData);
+
+    if (rc < 0) {
+        oracle_capture_last_error();
+        return rc;
+    }
+
+    varData[0] = *data;
+
+    rc = dpiStmt_bindByName(
+        stmt->stmt,
+        name,
+        (uint32_t) strlen(name),
+        var);
+
+    if (rc < 0)
+        oracle_capture_last_error();
+
+    dpiVar_release(var);
 
     return rc;
 }
@@ -355,6 +410,42 @@ int32_t oracle_bind_double(oracle_stmt *stmt, const char *name, double value)
     return oracle_bind_native(
         stmt,
         name,
+        DPI_NATIVE_TYPE_DOUBLE,
+        &data);
+}
+
+int32_t oracle_bind_binary_float(oracle_stmt *stmt, const char *name, double value)
+{
+    dpiData data;
+
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setFloat(
+        &data,
+        (float) value);
+
+    return oracle_bind_typed(
+        stmt,
+        name,
+        DPI_ORACLE_TYPE_NATIVE_FLOAT,
+        DPI_NATIVE_TYPE_FLOAT,
+        &data);
+}
+
+int32_t oracle_bind_binary_double(oracle_stmt *stmt, const char *name, double value)
+{
+    dpiData data;
+
+    memset(&data, 0, sizeof(data));
+
+    dpiData_setDouble(
+        &data,
+        value);
+
+    return oracle_bind_typed(
+        stmt,
+        name,
+        DPI_ORACLE_TYPE_NATIVE_DOUBLE,
         DPI_NATIVE_TYPE_DOUBLE,
         &data);
 }

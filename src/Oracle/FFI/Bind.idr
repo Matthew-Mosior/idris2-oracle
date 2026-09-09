@@ -17,6 +17,19 @@ prim__bindString : AnyPtr -> String -> String -> PrimIO Int32
 export %foreign "C:oracle_bind_double,oracle-idris"
 prim__bindDouble : AnyPtr -> String -> Double -> PrimIO Int32
 
+||| Bind an Oracle BINARY_FLOAT value.
+|||
+||| The Idris Double is narrowed to Oracle's native 32-bit BINARY_FLOAT
+||| representation by the C layer.
+|||
+export %foreign "C:oracle_bind_binary_float,oracle-idris"
+prim__bindBinaryFloat : AnyPtr -> String -> Double -> PrimIO Int32
+
+||| Bind an Oracle BINARY_DOUBLE value.
+|||
+export %foreign "C:oracle_bind_binary_double,oracle-idris"
+prim__bindBinaryDouble : AnyPtr -> String -> Double -> PrimIO Int32
+
 ||| Bind a Bool value to a named parameter.
 |||
 ||| The C layer should map 0/1 into the Oracle boolean binding.

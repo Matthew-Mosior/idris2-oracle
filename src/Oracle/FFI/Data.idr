@@ -10,6 +10,21 @@ prim__dataIsNull : AnyPtr -> PrimIO Int32
 export %foreign "C:oracle_data_double,oracle-idris"
 prim__dataDouble : AnyPtr -> PrimIO Double
 
+||| Extract a BINARY_FLOAT value.
+|||
+||| The C layer widens the native 32-bit floating-point value to a C double
+||| before returning it across the Idris FFI.
+|||
+export %foreign "C:oracle_data_binary_float,oracle-idris"
+prim__dataBinaryFloat : AnyPtr -> PrimIO Double
+
+||| Extract a BINARY_DOUBLE value.
+|||
+||| The value is returned directly as a C double.
+|||
+export %foreign "C:oracle_data_binary_double,oracle-idris"
+prim__dataBinaryDouble : AnyPtr -> PrimIO Double
+
 ||| Extract String value.
 |||
 export %foreign "C:oracle_data_string,oracle-idris"

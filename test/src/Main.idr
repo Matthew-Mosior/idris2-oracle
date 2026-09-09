@@ -58,6 +58,7 @@ main = do
       test_QueryOneAs conn >>== \_ =>
       test_QueryCharacterTypes conn >>== \_ =>
       test_QueryRawType conn >>== \_ =>
+      test_QueryBinaryFloatingTypes conn >>== \_ =>
       test_QueryTypedPeople conn >>== \_ =>
       test_QueryOneTyped conn >>== \_ =>
       test_QueryOneMissing conn >>== \_ =>

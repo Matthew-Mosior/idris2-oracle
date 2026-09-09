@@ -12,6 +12,8 @@ data OracleType
   | OracleTypeNChar
   | OracleTypeRaw
   | OracleTypeNumber
+  | OracleTypeBinaryFloat
+  | OracleTypeBinaryDouble
   | OracleTypeDate
   | OracleTypeTimestamp
   | OracleTypeTimestampTZ
@@ -34,6 +36,8 @@ fromOracleTypeNum 2002 = OracleTypeNVarchar
 fromOracleTypeNum 2004 = OracleTypeNChar
 fromOracleTypeNum 2006 = OracleTypeRaw
 fromOracleTypeNum 2010 = OracleTypeNumber
+fromOracleTypeNum 2007 = OracleTypeBinaryFloat
+fromOracleTypeNum 2008 = OracleTypeBinaryDouble
 fromOracleTypeNum 2011 = OracleTypeDate
 fromOracleTypeNum 2012 = OracleTypeTimestamp
 fromOracleTypeNum 2013 = OracleTypeTimestampTZ
