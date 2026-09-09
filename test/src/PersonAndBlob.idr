@@ -32,7 +32,9 @@ implementation FromOracle ByteString where
 
 public export
 implementation FromOracle Double where
-  fromOracle (OracleNumber n) = Right n
+  fromOracle (OracleNumber n)       = Right n
+  fromOracle (OracleBinaryFloat f)  = Right f
+  fromOracle (OracleBinaryDouble d) = Right d
   fromOracle value =
     Left $
       MkOracleError

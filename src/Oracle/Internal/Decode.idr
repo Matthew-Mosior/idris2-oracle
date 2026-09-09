@@ -71,21 +71,27 @@ decodeColumn stmt column = do
               pure (Right OracleNull)
             False => do
               case info.oracletype of
-                OracleTypeVarchar     =>
+                OracleTypeVarchar      =>
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
-                OracleTypeChar        =>
+                OracleTypeChar         =>
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
-                OracleTypeNVarchar    =>
+                OracleTypeNVarchar     =>
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
-                OracleTypeNChar       =>
+                OracleTypeNChar        =>
                   Right . OracleString <$>
                     primIO (prim__dataString dataptr)
-                OracleTypeNumber      =>
+                OracleTypeNumber       =>
                   Right . OracleNumber <$>
                     primIO (prim__dataDouble dataptr)
+                OracleTypeBinaryFloat  =>
+                  Right . OracleBinaryFloat <$>
+                    primIO (prim__dataBinaryFloat dataptr)
+                OracleTypeBinaryDouble =>
+                  Right . OracleBinaryDouble <$>
+                    primIO (prim__dataBinaryDouble dataptr)
                 OracleTypeDate => do
                   dt <- primIO (prim__dataTimestamp dataptr)
                   pure $
@@ -98,7 +104,7 @@ decodeColumn stmt column = do
                           !(primIO (prim__timestampHour dt))
                           !(primIO (prim__timestampMinute dt))
                           !(primIO (prim__timestampSecond dt))
-                OracleTypeTimestamp   => do
+                OracleTypeTimestamp    => do
                   ts <- primIO (prim__dataTimestamp dataptr)
                   pure $
                     Right $
@@ -111,7 +117,7 @@ decodeColumn stmt column = do
                            !(primIO (prim__timestampMinute ts))
                            !(primIO (prim__timestampSecond ts))
                            !(primIO (prim__timestampNanosecond ts))
-                OracleTypeTimestampTZ => do
+                OracleTypeTimestampTZ  => do
                   ts <- primIO (prim__dataTimestamp dataptr)
                   pure $
                     Right $
@@ -126,7 +132,7 @@ decodeColumn stmt column = do
                           !(primIO (prim__timestampNanosecond ts))
                           !(primIO (prim__timestampTZHour ts))
                           !(primIO (prim__timestampTZMinute ts))
-                OracleTypeIntervalYM  => do
+                OracleTypeIntervalYM   => do
                   iv <- primIO (prim__dataIntervalYM dataptr)
                   pure $
                     Right $
@@ -134,7 +140,7 @@ decodeColumn stmt column = do
                         MkOracleIntervalYM
                           !(primIO (prim__intervalYMYears iv))
                           !(primIO (prim__intervalYMMonths iv))
-                OracleTypeIntervalDS  => do
+                OracleTypeIntervalDS   => do
                   iv <- primIO (prim__dataIntervalDS dataptr)
                   pure $
                     Right $
@@ -145,7 +151,7 @@ decodeColumn stmt column = do
                           !(primIO (prim__intervalDSMinutes iv))
                           !(primIO (prim__intervalDSSeconds iv))
                           !(primIO (prim__intervalDSNanoseconds iv))
-                OracleTypeRaw         => do
+                OracleTypeRaw          => do
                   result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeRaw) 
                   case result of
                     Right value =>
@@ -156,7 +162,7 @@ decodeColumn stmt column = do
                           pure (Right value')
                     Left err    =>
                       assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
-                OracleTypeBlob        => do
+                OracleTypeBlob         => do
                   result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeBlob) 
                   case result of
                     Right value =>
@@ -167,7 +173,7 @@ decodeColumn stmt column = do
                           pure (Right value')
                     Left err    =>
                       assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
-                OracleTypeClob        => do
+                OracleTypeClob         => do
                   result <- runElinIO (withDataPtrAndOracleType dataptr OracleTypeClob) 
                   case result of
                     Right value =>
@@ -178,7 +184,7 @@ decodeColumn stmt column = do
                           pure (Right value')
                     Left err    =>
                       assert_total $ idris_crash "Oracle.Internal.Decode.decodeColumn: \{show err}"
-                OracleTypeBoolean     => do
+                OracleTypeBoolean      => do
                   b <- primIO (prim__dataBool dataptr)
                   case b of
                     0 =>
@@ -193,7 +199,7 @@ decodeColumn stmt column = do
                             "Unsupported BOOLEAN: \{show n}"
                             "Oracle.Internal.Decode.decodeColumn"
                             False
-                OracleTypeUnknown n   =>
+                OracleTypeUnknown n    =>
                   pure $
                     Left $
                       MkOracleError

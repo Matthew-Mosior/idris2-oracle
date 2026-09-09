@@ -127,7 +127,9 @@ execute stmt = do
 ||| - OracleString
 ||| - OracleInt
 ||| - OracleUInt
-||| - OracleDouble
+||| - OracleNumber
+||| - OracleBinaryFloat
+||| - OracleBinaryDouble
 ||| - OracleBool
 ||| - OracleRaw
 ||| - OracleClob
@@ -138,8 +140,6 @@ execute stmt = do
 ||| - OracleTimestampLTZ
 ||| - OracleIntervalYM
 ||| - OracleIntervalDS
-|||
-||| OracleBytes bindings are not supported as of yet.
 |||
 export
 bindOne : Statement -> BindParameter -> IO (Either OracleError ())
@@ -154,6 +154,12 @@ bindOne stmt param =
     OracleNumber d        =>
       primIO (prim__bindDouble stmt.ptr param.name d)
         >>= finish
+    OracleBinaryFloat f   =>
+      primIO (prim__bindBinaryFloat stmt.ptr param.name f)
+        >>= finish
+    OracleBinaryDouble d  =>
+      primIO (prim__bindBinaryDouble stmt.ptr param.name d)
+        >>= finish 
     OracleBool b          =>
       primIO (prim__bindBool stmt.ptr param.name (if b then 1 else 0))
         >>= finish

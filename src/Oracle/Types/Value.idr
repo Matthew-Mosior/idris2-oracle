@@ -13,16 +13,18 @@ import Oracle.Types.DateTime
 public export
 data OracleValue
   = OracleNull          
-  | OracleString      String      -- VARCHAR2, CHAR, NVARCHAR2, etc.
-  | OracleNumber      Double      -- NUMBER
-  | OracleBool        Bool        -- BOOLEAN
-  | OracleRaw         ByteString  -- RAW
-  | OracleClob        String      -- Character large object (CLOB)
-  | OracleBlob        ByteString  -- Binary large object (BLOB)
-  | OracleDate        OracleDate
-  | OracleTimestamp   OracleTimestamp
-  | OracleTimestampTZ OracleTimestampTZ
-  | OracleIntervalYM  OracleIntervalYM
-  | OracleIntervalDS  OracleIntervalDS
+  | OracleString       String      -- VARCHAR2, CHAR, NVARCHAR2, etc.
+  | OracleNumber       Double      -- NUMBER
+  | OracleBinaryFloat  Double
+  | OracleBinaryDouble Double
+  | OracleBool         Bool        -- BOOLEAN
+  | OracleRaw          ByteString  -- RAW
+  | OracleClob         String      -- Character large object (CLOB)
+  | OracleBlob         ByteString  -- Binary large object (BLOB)
+  | OracleDate         OracleDate
+  | OracleTimestamp    OracleTimestamp
+  | OracleTimestampTZ  OracleTimestampTZ
+  | OracleIntervalYM   OracleIntervalYM
+  | OracleIntervalDS   OracleIntervalDS
 
 %runElab derive "OracleValue" [Eq,Ord,Show]

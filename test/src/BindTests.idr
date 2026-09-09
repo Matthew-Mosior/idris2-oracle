@@ -170,6 +170,39 @@ test_BindDouble conn = do
     Right () =>
       pure (Right ())
 
+||| Verify BINARY_FLOAT and BINARY_DOUBLE binding.
+|||
+export
+test_BindBinaryFloatingTypes : Connection -> IO (Either OracleError ())
+test_BindBinaryFloatingTypes conn = do
+  result <-
+    runBind conn
+      """
+      INSERT INTO floating_types(
+          id,
+          binary_float_value,
+          binary_double_value
+      )
+      VALUES(
+          floating_types_seq.NEXTVAL,
+          :binary_float_value,
+          :binary_double_value
+      )
+      """
+      [ MkBindParameter ":binary_float_value" (OracleBinaryFloat 1.5)
+      , MkBindParameter ":binary_double_value" (OracleBinaryDouble (-42.25))
+      ]
+  case result of
+    Left err =>
+      pure $
+        Left $
+          MkOracleError (-1)
+                        (show err)
+                        "BindTests.test_BindBinaryFloatingTypes"
+                        False
+    Right () =>
+      pure (Right ())
+
 ||| Verify TRUE boolean binding.
 |||
 export

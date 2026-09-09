@@ -46,6 +46,9 @@ installSchema conn =
     (execute_ conn "DROP TABLE raw_types CASCADE CONSTRAINTS" [])
   >>== \_ =>
   ignoreMissingObject
+    (execute_ conn "DROP TABLE floating_types CASCADE CONSTRAINTS" [])
+  >>== \_ =>
+  ignoreMissingObject
     (execute_ conn "DROP SEQUENCE blobs_seq" [])
   >>== \_ =>
   ignoreMissingObject
@@ -56,6 +59,9 @@ installSchema conn =
   >>== \_ =>
   ignoreMissingObject
     (execute_ conn "DROP SEQUENCE raw_types_seq" [])
+  >>== \_ =>
+  ignoreMissingObject
+    (execute_ conn "DROP SEQUENCE floating_types_seq" [])
   >>== \_ =>
   execute_
     conn
@@ -158,6 +164,27 @@ installSchema conn =
         NOCACHE
     """
     []
+  >>== \_ =>
+  execute_
+    conn
+    """
+    CREATE TABLE floating_types (
+        id                  NUMBER PRIMARY KEY,
+        binary_float_value  BINARY_FLOAT,
+        binary_double_value BINARY_DOUBLE
+    )
+    """
+    []
+  >>== \_ =>
+  execute_
+    conn
+    """
+    CREATE SEQUENCE floating_types_seq
+        START WITH 1
+        INCREMENT BY 1
+        NOCACHE
+    """
+    []
 
 ||| Remove all rows from every integration test table.
 |||
@@ -171,6 +198,8 @@ clearTables conn =
   execute_ conn "TRUNCATE TABLE character_types" []
     >>== \_ =>
   execute_ conn "TRUNCATE TABLE raw_types" []
+    >>== \_ =>
+  execute_ conn "TRUNCATE TABLE floating_types" []
 
 ||| Remove all migration history for the integration test suite.
 |||
@@ -465,6 +494,35 @@ seedRawTypes conn =
         (OracleRaw (pack [0x00, 0xFF, 0x01, 0x80, 0x41, 0x42]))
     ]
 
+||| Populate the FLOATING_TYPES table with the standard integration test fixture.
+|||
+export
+seedFloatingTypes : Connection -> IO (Either OracleError ())
+seedFloatingTypes conn =
+  execute_
+    conn
+    """
+    INSERT INTO floating_types
+    (
+        id,
+        binary_float_value,
+        binary_double_value
+    )
+    VALUES
+    (
+        floating_types_seq.NEXTVAL,
+        :binary_float_value,
+        :binary_double_value
+      )
+    """
+    [ MkBindParameter
+        ":binary_float_value"
+        (OracleBinaryFloat 1.5)
+    , MkBindParameter
+        ":binary_double_value"
+        (OracleBinaryDouble (-42.25))
+    ]
+
 ||| Restore the integration database to its standard fixture.
 |||
 export
@@ -479,5 +537,7 @@ resetDatabase conn =
   seedCharacterTypes conn
   >>== \_ =>
   seedRawTypes conn
+  >>== \_ =>
+  seedFloatingTypes conn
   >>== \_ =>
   commit conn
