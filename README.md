@@ -33,6 +33,8 @@ Running `make install` installs the library.
   - `NVARCHAR2`
   - `NCHAR`
   - `NUMBER`
+  - `BINARY_FLOAT`
+  - `BINARY_DOUBLE`
   - `BOOLEAN`
   - `RAW`
   - `CLOB`
@@ -435,6 +437,8 @@ The library currently supports binding:
 - `OracleNull`
 - `OracleString`
 - `OracleNumber`
+- `OracleBinaryFloat`
+- `OracleBinaryDouble`
 - `OracleBool`
 - `OracleRaw`
 - `OracleClob`
